@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: ai-code-learn-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false     # ใส่ connection string ของ Neon ที่หน้า dashboard
+      - key: JWT_SECRET
+        generateValue: true
+      - key: INTERNAL_API_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false     # https://<your-app>.vercel.app
+      - key: GEMINI_API_KEY
+        sync: false
