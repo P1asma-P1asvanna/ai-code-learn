@@ -1,43 +1,49 @@
 import type { NextAuthOptions } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 
-const API = process.env.NEXT_PUBLIC_API_URL!;
+import { signBackendToken } from "@/lib/server/backend-token";
+
+const SESSION_SECONDS = 7 * 24 * 60 * 60;
+const RENEW_BEFORE_SECONDS = 24 * 60 * 60;
 
 export const authOptions: NextAuthOptions = {
   providers: [
     GitHubProvider({
-      clientId: process.env.GITHUB_ID!,
-      clientSecret: process.env.GITHUB_SECRET!,
+      clientId: process.env.GITHUB_ID ?? "",
+      clientSecret: process.env.GITHUB_SECRET ?? "",
     }),
   ],
+  session: { strategy: "jwt", maxAge: SESSION_SECONDS },
   callbacks: {
     async jwt({ token, account, profile }) {
-      // ทำครั้งเดียวตอน sign in: แลก GitHub profile เป็น JWT ของ backend เรา
+      // ตอนล็อกอินครั้งแรก จำตัวตน GitHub ไว้ใน token ของ Auth.js
       if (account && profile) {
-        const res = await fetch(`${API}/api/v1/auth/github`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Internal-Secret": process.env.INTERNAL_API_SECRET!,
-          },
-          body: JSON.stringify({
-            github_id: String((profile as { id: number }).id),
-            username: (profile as { login: string }).login,
-            email: token.email ?? null,
-            avatar_url: token.picture ?? null,
-          }),
+        const github = profile as { id?: number | string; login?: string };
+        token.githubId = String(github.id ?? token.sub ?? "");
+        token.login = github.login ?? token.name ?? "user";
+      }
+
+      // ออก/ต่ออายุ token สำหรับ backend เมื่อยังไม่มีหรือใกล้หมดอายุ (ไม่ต้องเรียก backend)
+      const now = Math.floor(Date.now() / 1000);
+      const expiresAt = typeof token.backendTokenExp === "number" ? token.backendTokenExp : 0;
+      if (
+        typeof token.githubId === "string" &&
+        token.githubId !== "" &&
+        (typeof token.backendToken !== "string" || expiresAt - now < RENEW_BEFORE_SECONDS)
+      ) {
+        const signed = signBackendToken({
+          sub: token.githubId,
+          login: String(token.login ?? "user"),
+          picture: typeof token.picture === "string" ? token.picture : null,
         });
-        if (res.ok) {
-          const data = await res.json();
-          token.accessToken = data.access_token;
-          token.userId = data.user_id;
-        }
+        token.backendToken = signed.token;
+        token.backendTokenExp = signed.exp;
       }
       return token;
     },
     async session({ session, token }) {
-      session.accessToken = token.accessToken as string | undefined;
-      session.userId = token.userId as string | undefined;
+      session.accessToken =
+        typeof token.backendToken === "string" ? token.backendToken : undefined;
       return session;
     },
   },

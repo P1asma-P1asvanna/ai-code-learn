@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -20,6 +20,9 @@ def complete_lesson(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    if db.get(Lesson, lesson_id) is None:
+        raise HTTPException(404, "Lesson not found")
+
     row = db.scalar(
         select(LessonProgress).where(
             LessonProgress.user_id == user.id, LessonProgress.lesson_id == lesson_id

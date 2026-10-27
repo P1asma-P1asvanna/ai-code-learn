@@ -10,6 +10,8 @@ engine = create_engine(
     pool_pre_ping=True,   # จำเป็นมากกับ Neon/Supabase ที่ตัด connection ที่ idle
     pool_size=5,
     max_overflow=5,
+    # ปิด prepared statement ฝั่ง driver เพื่อให้ใช้ได้ทั้งสายตรงและสาย "pooled" (PgBouncer) ของ Neon/Supabase
+    connect_args={"prepare_threshold": None},
 )
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
