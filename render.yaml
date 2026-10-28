@@ -2,28 +2,12 @@ services:
   - type: web
     name: ai-code-learn-api
     runtime: docker
-    rootDir: backend # ใช้กำหนดว่าแก้ไฟล์ในโฟลเดอร์ไหนถึงจะ build ใหม่ (แก้แค่ frontend จะไม่ build backend)
-    # สองบรรทัดนี้ Render นับจาก "รากของ repo" ไม่ใช่จาก rootDir (ตามเอกสาร Blueprint)
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    plan: free
-    region: singapore
-    healthCheckPath: /health
-    envVars:
-      - key: APP_ENV
-        value: production
-      - key: AUTO_SEED
-        value: "true"
-      # ---- ค่าที่ต้องกรอกเองในหน้า Render ----
-      - key: DATABASE_URL
-        sync: false # connection string จาก Neon (ขึ้นต้น postgresql:// ได้เลย)
-      - key: JWT_SECRET
-        sync: false # สุ่มเอง ยาว 32+ ตัวอักษร และต้องใช้ค่าเดียวกันกับ BACKEND_JWT_SECRET ที่ Vercel
-      - key: CORS_ORIGINS
-        sync: false # https://ชื่อโปรเจกต์.vercel.app (ไม่มี / ปิดท้าย)
-      # ---- AI ตรวจโค้ด ----
-      # AI_API_KEY ไม่ได้ใส่ไว้ที่นี่ตั้งใจ: ไม่ตั้ง = ปิดระบบ AI ถ้าจะเปิดให้เพิ่มเองที่ Render → Environment (ดูใน README)
-      - key: AI_BASE_URL
-        value: https://generativelanguage.googleapis.com/v1beta/openai
-      - key: AI_MODEL
-        value: gemini-flash-lite-latest,gemini-flash-latest,gemini-3.1-flash-lite
+    services:
+     - type: web
+       name: ai-code-learn-api
+       runtime: docker
+       dockerfilePath: ./backend/Dockerfile
+       dockerContext: ./backend
+       plan: free
+       region: singapore
+       healthCheckPath: /health
