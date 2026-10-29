@@ -25,6 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <nav className="nav">
                 <Link href="/lessons">บทเรียน</Link>
                 <Link href="/playground">Playground</Link>
+                <Link href="/dashboard">Dashboard</Link>
               </nav>
               <div className="spacer" />
               <AuthButton />

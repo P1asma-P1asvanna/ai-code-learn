@@ -109,3 +109,40 @@ export const completeLesson = (token: string, lessonId: string) =>
     method: "POST",
     token,
   });
+
+// ---- Dashboard (ต้องล็อกอิน) ----
+
+export type DashboardLesson = {
+  id: string;
+  title: string;
+  slug: string;
+  course_slug: string;
+  course_title: string;
+  status: LessonStatus;
+};
+
+export type DashboardCourse = {
+  slug: string;
+  title: string;
+  language: { slug: string; name: string };
+  lessons_total: number;
+  lessons_completed: number;
+  exercises_total: number;
+  exercises_passed: number;
+  score: number;
+  max_score: number;
+};
+
+export type DashboardData = {
+  lessons_completed: number;
+  lessons_total: number;
+  total_score: number;
+  max_score: number;
+  exercises_passed: number;
+  exercises_total: number;
+  courses: DashboardCourse[];
+  recent_lessons: DashboardLesson[];
+  next_up: DashboardLesson | null;
+};
+
+export const fetchDashboard = (token: string) => apiFetch<DashboardData>("/progress/dashboard", { token });

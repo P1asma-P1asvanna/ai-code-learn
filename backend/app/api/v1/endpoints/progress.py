@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user
 from app.db.session import get_db
-from app.models.content import Course, Lesson
+from app.models.content import Course, Language, Lesson
 from app.models.exercise import Exercise, Submission
 from app.models.progress import LessonProgress
 from app.models.user import User
@@ -272,44 +272,105 @@ def course_progress(
 
 @router.get("/dashboard")
 def dashboard(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    total_lessons = db.scalar(select(func.count(Lesson.id))) or 0
-    completed = (
-        db.scalar(
-            select(func.count(LessonProgress.id)).where(
-                LessonProgress.user_id == user.id,
-                LessonProgress.status == "completed",
-            )
-        )
-        or 0
-    )
-    total_score = (
-        db.scalar(
-            select(func.coalesce(func.sum(Submission.score), 0)).where(
-                Submission.user_id == user.id
-            )
-        )
-        or 0
-    )
-    exercises_passed = (
-        db.scalar(
-            select(func.count(func.distinct(Submission.exercise_id))).where(
-                Submission.user_id == user.id, Submission.passed.is_(True)
-            )
-        )
-        or 0
-    )
-    recent = db.scalars(
-        select(Lesson)
-        .join(LessonProgress, LessonProgress.lesson_id == Lesson.id)
-        .where(LessonProgress.user_id == user.id)
-        .order_by(LessonProgress.updated_at.desc())
-        .limit(5)
+    """ภาพรวมของผู้เรียน: คะแนน ความคืบหน้าแยกตามคอร์ส บทที่เรียนล่าสุด และบทถัดไปที่ควรเรียน"""
+    rows = db.execute(
+        select(Course, Language, Lesson)
+        .join(Language, Language.id == Course.language_id)
+        .join(Lesson, Lesson.course_id == Course.id)
+        .order_by(Language.sort_order, Course.sort_order, Lesson.sort_order)
     ).all()
 
+    exercise_totals = {
+        lesson_id: (count, points)
+        for lesson_id, count, points in db.execute(
+            select(Exercise.lesson_id, func.count(Exercise.id), func.coalesce(func.sum(Exercise.points), 0)).group_by(
+                Exercise.lesson_id
+            )
+        ).all()
+    }
+    passed_counts = dict(
+        db.execute(
+            select(Exercise.lesson_id, func.count(func.distinct(Submission.exercise_id)))
+            .join(Submission, Submission.exercise_id == Exercise.id)
+            .where(Submission.user_id == user.id, Submission.passed.is_(True))
+            .group_by(Exercise.lesson_id)
+        ).all()
+    )
+    scores = dict(
+        db.execute(
+            select(Exercise.lesson_id, func.coalesce(func.sum(Submission.score), 0))
+            .join(Submission, Submission.exercise_id == Exercise.id)
+            .where(Submission.user_id == user.id)
+            .group_by(Exercise.lesson_id)
+        ).all()
+    )
+    progress = {
+        row.lesson_id: row
+        for row in db.scalars(select(LessonProgress).where(LessonProgress.user_id == user.id)).all()
+    }
+
+    courses: dict[str, dict] = {}
+    lesson_info: dict[str, tuple[Course, Lesson]] = {}
+    first_unfinished: tuple[Course, Lesson] | None = None
+    for course, language, lesson in rows:
+        lesson_info[lesson.id] = (course, lesson)
+        entry = courses.setdefault(
+            course.id,
+            {
+                "slug": course.slug,
+                "title": course.title,
+                "language": {"slug": language.slug, "name": language.name},
+                "lessons_total": 0,
+                "lessons_completed": 0,
+                "exercises_total": 0,
+                "exercises_passed": 0,
+                "score": 0,
+                "max_score": 0,
+            },
+        )
+        ex_count, ex_points = exercise_totals.get(lesson.id, (0, 0))
+        status = progress[lesson.id].status if lesson.id in progress else "not_started"
+        entry["lessons_total"] += 1
+        entry["lessons_completed"] += 1 if status == "completed" else 0
+        entry["exercises_total"] += ex_count
+        entry["exercises_passed"] += passed_counts.get(lesson.id, 0)
+        entry["score"] += int(scores.get(lesson.id, 0))
+        entry["max_score"] += int(ex_points)
+        if status != "completed" and first_unfinished is None:
+            first_unfinished = (course, lesson)
+
+    def lesson_brief(course: Course, lesson: Lesson) -> dict:
+        row = progress.get(lesson.id)
+        return {
+            "id": lesson.id,
+            "title": lesson.title,
+            "slug": lesson.slug,
+            "course_slug": course.slug,
+            "course_title": course.title,
+            "status": row.status if row else "not_started",
+        }
+
+    by_recency = sorted(
+        (row for row in progress.values() if row.lesson_id in lesson_info),
+        key=lambda row: row.updated_at,
+        reverse=True,
+    )
+    recent = [lesson_brief(*lesson_info[row.lesson_id]) for row in by_recency[:5]]
+
+    # บทถัดไปที่ควรเรียน: บทที่ค้างอยู่ล่าสุดก่อน ไม่มีก็บทแรกที่ยังไม่จบ (ทุกบทจบแล้ว = None)
+    in_progress = next((row for row in by_recency if row.status != "completed"), None)
+    target = lesson_info[in_progress.lesson_id] if in_progress else first_unfinished
+    next_up = lesson_brief(*target) if target else None
+
+    course_list = list(courses.values())
     return {
-        "lessons_completed": completed,
-        "lessons_total": total_lessons,
-        "total_score": total_score,
-        "exercises_passed": exercises_passed,
-        "recent_lessons": [{"id": r.id, "title": r.title} for r in recent],
+        "lessons_completed": sum(c["lessons_completed"] for c in course_list),
+        "lessons_total": sum(c["lessons_total"] for c in course_list),
+        "total_score": sum(c["score"] for c in course_list),
+        "max_score": sum(c["max_score"] for c in course_list),
+        "exercises_passed": sum(c["exercises_passed"] for c in course_list),
+        "exercises_total": sum(c["exercises_total"] for c in course_list),
+        "courses": course_list,
+        "recent_lessons": recent,
+        "next_up": next_up,
     }

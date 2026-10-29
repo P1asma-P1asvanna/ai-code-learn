@@ -301,6 +301,55 @@ class ApiTests(unittest.TestCase):
         self.assertNotEqual(exercises[1]["prompt"], "old prompt")
         self.assertEqual(exercises[1]["cases"], [{"before": "", "after": ""}])
 
+    # ---------------------------------------------------------------- Dashboard
+
+    def dashboard(self, token: str) -> dict:
+        response = self.client.get("/api/v1/progress/dashboard", headers=auth(token))
+        self.assertEqual(response.status_code, 200)
+        return response.json()
+
+    def test_dashboard_requires_login(self):
+        self.assertEqual(self.client.get("/api/v1/progress/dashboard").status_code, 401)
+
+    def test_dashboard_for_a_new_learner(self):
+        data = self.dashboard(make_token())
+        self.assertEqual(data["total_score"], 0)
+        self.assertEqual(data["lessons_completed"], 0)
+        self.assertEqual(data["exercises_passed"], 0)
+        self.assertEqual(data["recent_lessons"], [])
+        self.assertGreater(data["max_score"], 0)
+        self.assertGreater(data["exercises_total"], 0)
+        self.assertEqual(data["lessons_total"], sum(c["lessons_total"] for c in data["courses"]))
+        self.assertEqual([c["slug"] for c in data["courses"]][:2], ["python-basics", "javascript-basics"])
+        self.assertEqual(data["courses"][0]["language"]["name"], "Python")
+        self.assertEqual(data["next_up"]["course_slug"], "python-basics")
+        self.assertEqual(data["next_up"]["slug"], "hello-world")
+        self.assertEqual(data["next_up"]["status"], "not_started")
+
+    def test_dashboard_tracks_progress_and_suggests_the_next_lesson(self):
+        token = make_token()
+        page = self.lesson_page("python-basics", "hello-world").json()
+        mcq_one, code_ex, mcq_two = page["exercises"]
+
+        self.submit(token, mcq_one["id"], answer="b")
+        started = self.dashboard(token)
+        self.assertEqual(started["next_up"]["slug"], "hello-world")
+        self.assertEqual(started["next_up"]["status"], "in_progress")
+        self.assertEqual(started["recent_lessons"][0]["course_slug"], "python-basics")
+        self.assertEqual(started["total_score"], 10)
+
+        self.submit(token, code_ex["id"], answer="print('Hello, world!')", outputs=["Hello, world!"])
+        self.submit(token, mcq_two["id"], answer="b")
+        done = self.dashboard(token)
+        python_course = done["courses"][0]
+        self.assertEqual(python_course["lessons_completed"], 1)
+        self.assertEqual(python_course["score"], 40)
+        self.assertEqual(python_course["exercises_passed"], 3)
+        self.assertEqual(done["courses"][1]["score"], 0)
+        self.assertEqual(done["next_up"]["slug"], "variables")
+        self.assertEqual(done["recent_lessons"][0]["status"], "completed")
+        self.assertLessEqual(done["total_score"], done["max_score"])
+
     # ---------------------------------------------------------------- AI ตรวจโค้ด
 
     def review(self, token: str, **overrides):

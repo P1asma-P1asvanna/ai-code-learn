@@ -812,6 +812,71 @@ a.card-link:hover {
   gap: 6px;
 }
 
+/* ---------- Dashboard ---------- */
+
+.dashboard h2 {
+  margin-bottom: 8px;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.tile-value {
+  font-size: 1.7rem;
+  line-height: 1.1;
+}
+
+.tile-of {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.meter {
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted) 22%, transparent);
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.course-progress {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.course-progress li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.next-up {
+  gap: 12px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
