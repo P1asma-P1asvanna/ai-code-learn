@@ -2,12 +2,23 @@ services:
   - type: web
     name: ai-code-learn-api
     runtime: docker
-    services:
-     - type: web
-       name: ai-code-learn-api
-       runtime: docker
-       dockerfilePath: ./backend/Dockerfile
-       dockerContext: ./backend
-       plan: free
-       region: singapore
-       healthCheckPath: /health
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: AUTO_SEED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: AI_BASE_URL
+        value: https://generativelanguage.googleapis.com/v1beta/openai
+      - key: AI_MODEL
+        value: gemini-flash-lite-latest,gemini-flash-latest,gemini-3.1-flash-lite
