@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 AI Code Learn
               </Link>
               <nav className="nav">
-                <Link href="/">บทเรียน</Link>
+                <Link href="/lessons">บทเรียน</Link>
                 <Link href="/playground">Playground</Link>
               </nav>
               <div className="spacer" />

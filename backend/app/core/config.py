@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+psycopg://app:app@localhost:5432/ailearn"
     # สร้างตารางอัตโนมัติตอนเริ่มระบบ (ไม่ต้องรัน migration ด้วยมือ)
     AUTO_CREATE_TABLES: bool = True
-    # ใส่บทเรียนตัวอย่างตอนเริ่มระบบ ถ้าฐานข้อมูลยังว่าง
+    # ซิงก์บทเรียน/แบบฝึกหัดตอนเริ่มระบบ (เพิ่มของใหม่ อัปเดตของเดิม ไม่ลบอะไร)
     AUTO_SEED: bool = False
 
     # secret ตัวนี้ต้องตรงกับ BACKEND_JWT_SECRET ฝั่ง Vercel (Next.js เป็นคนเซ็น token)

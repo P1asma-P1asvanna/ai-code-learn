@@ -417,6 +417,401 @@ select {
   border-top: 1px solid var(--border);
 }
 
+/* ---------- layout เสริม ---------- */
+
+.container.narrow {
+  max-width: 760px;
+}
+
+.breadcrumb {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  color: var(--muted);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.notice {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+}
+
+.btn-small {
+  padding: 4px 10px;
+  font-size: 0.82rem;
+}
+
+a.card-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.card-link:hover {
+  border-color: var(--accent);
+}
+
+.cards > li {
+  display: flex;
+}
+
+.cards > li > .card {
+  flex: 1;
+}
+
+/* ---------- รายการบทเรียน ---------- */
+
+.lesson-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lesson-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: inherit;
+  text-decoration: none;
+}
+
+.lesson-row:hover {
+  border-color: var(--accent);
+}
+
+.lesson-row-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.lesson-num {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.lesson-num.done {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: #fff;
+}
+
+.status {
+  flex: none;
+  font-size: 0.78rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.status-completed {
+  color: var(--ok);
+  border-color: var(--ok);
+}
+
+.status-in_progress {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+/* ---------- หน้าอ่านบทเรียน ---------- */
+
+.lesson-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 480px);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 1000px) {
+  .lesson-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.lesson-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.lesson-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.workspace {
+  position: sticky;
+  top: 12px;
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+}
+
+@media (max-width: 1000px) {
+  .workspace {
+    position: static;
+    max-height: none;
+  }
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.tab {
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.case-hint {
+  margin: 0 0 10px;
+}
+
+.case-hint pre,
+.small-output {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--code-bg);
+  color: var(--code-text);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.small-output {
+  min-height: 0;
+  max-height: 160px;
+}
+
+.lesson-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---------- เนื้อหา Markdown ---------- */
+
+.md h1 {
+  font-size: 1.6rem;
+  margin: 0 0 10px;
+}
+
+.md h2 {
+  font-size: 1.2rem;
+  margin: 22px 0 6px;
+}
+
+.md h3 {
+  font-size: 1.05rem;
+  margin: 16px 0 4px;
+}
+
+.md p {
+  margin: 8px 0;
+}
+
+.md ul,
+.md ol {
+  margin: 8px 0;
+  padding-left: 22px;
+}
+
+.md li {
+  margin: 3px 0;
+}
+
+.md blockquote {
+  margin: 10px 0;
+  padding: 6px 12px;
+  border-left: 4px solid var(--border);
+  color: var(--muted);
+}
+
+.md code,
+.prompt code,
+.option code,
+.case-results code {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--muted) 16%, transparent);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+
+.md-code {
+  position: relative;
+  margin: 10px 0;
+}
+
+.md-code pre {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: var(--code-bg);
+  color: var(--code-text);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.md-code pre code {
+  padding: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+.md-code .btn {
+  margin-top: 6px;
+}
+
+/* ---------- แบบฝึกหัด ---------- */
+
+.exercise-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.exercise {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.exercise.done {
+  border-color: var(--ok);
+}
+
+.exercise-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.prompt {
+  margin: 8px 0 10px;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.option.selected {
+  border-color: var(--accent);
+}
+
+.option.correct {
+  border-color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+}
+
+.result {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+}
+
+.result p {
+  margin: 4px 0 0;
+}
+
+.result.pass {
+  border-left-color: var(--ok);
+}
+
+.result.fail {
+  border-left-color: var(--danger);
+}
+
+.case-results {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

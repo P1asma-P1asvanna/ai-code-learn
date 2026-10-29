@@ -9,7 +9,7 @@ from app.api.v1.router import api_router
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import engine
-from app.services.seed import seed_if_empty
+from app.services.seed import sync_content
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +21,10 @@ async def lifespan(_: FastAPI):
         Base.metadata.create_all(bind=engine)
     if settings.AUTO_SEED:
         try:
-            seed_if_empty()
-        except Exception:  # seed พังไม่ควรทำให้ทั้งระบบล่ม
-            logger.exception("seed failed")
+            # เพิ่ม/อัปเดตบทเรียนตาม course_content.py (ทำซ้ำได้ ไม่ลบข้อมูลผู้เรียน)
+            sync_content()
+        except Exception:  # ซิงก์พังไม่ควรทำให้ทั้งระบบล่ม
+            logger.exception("content sync failed")
     yield
 
 

@@ -14,9 +14,11 @@ try:
     from fastapi.testclient import TestClient
 
     from app.api.v1.endpoints import ai as ai_endpoint
+    from app.api.v1.endpoints import progress as progress_endpoint
     from app.core.config import settings
     from app.main import app
     from app.services import ai_review
+    from app.services.seed import sync_content
 except ImportError as exc:  # pragma: no cover
     raise unittest.SkipTest(f"ข้ามการทดสอบ API: {exc}")
 
@@ -53,6 +55,7 @@ class ApiTests(unittest.TestCase):
 
     def setUp(self):
         ai_endpoint.minute_limiter.reset()
+        progress_endpoint.submit_limiter.reset()
 
     # ---------------------------------------------------------------- พื้นฐาน
 
@@ -105,6 +108,198 @@ class ApiTests(unittest.TestCase):
         dashboard = self.client.get("/api/v1/progress/dashboard", headers=auth(token)).json()
         self.assertEqual(dashboard["lessons_completed"], 1)
         self.assertEqual(dashboard["recent_lessons"][0]["id"], lesson_id)
+
+    # ---------------------------------------------------------------- บทเรียนและแบบฝึกหัด
+
+    def lesson_page(self, course: str = "python-basics", lesson: str = "functions"):
+        return self.client.get(f"/api/v1/content/courses/{course}/lessons/{lesson}")
+
+    def submit(self, token: str, exercise_id: str, **body):
+        return self.client.post(
+            f"/api/v1/progress/exercises/{exercise_id}/submit", json=body, headers=auth(token)
+        )
+
+    def test_course_list_and_detail(self):
+        courses = {c["slug"]: c for c in self.client.get("/api/v1/content/courses").json()}
+        self.assertEqual(courses["python-basics"]["lesson_count"], 5)
+        self.assertEqual(courses["python-basics"]["language"]["name"], "Python")
+        self.assertEqual(courses["javascript-basics"]["lesson_count"], 5)
+
+        detail = self.client.get("/api/v1/content/courses/python-basics").json()
+        self.assertEqual([x["slug"] for x in detail["lessons"]][:2], ["hello-world", "variables"])
+        self.assertEqual(detail["lessons"][1]["exercise_count"], 3)
+        self.assertEqual(self.client.get("/api/v1/content/courses/nope").status_code, 404)
+
+    def test_lesson_page_has_neighbours_and_exercises_without_answers(self):
+        response = self.lesson_page()
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["course"]["language"]["slug"], "python")
+        self.assertEqual(data["prev"]["slug"], "loops")
+        self.assertIsNone(data["next"])
+        self.assertEqual([e["kind"] for e in data["exercises"]], ["mcq", "mcq", "code"])
+        self.assertEqual(data["exercises"][2]["cases"][0], {"before": "", "after": "print(square(4))"})
+
+        raw = response.text
+        for secret in ('"correct_option_id"', '"expected"', '"explanation"', '"test_cases"'):
+            self.assertNotIn(secret, raw)
+
+    def test_lesson_page_404(self):
+        self.assertEqual(self.lesson_page(lesson="nope").status_code, 404)
+        self.assertEqual(self.lesson_page(course="nope").status_code, 404)
+
+    def test_submit_requires_login(self):
+        exercise = self.lesson_page().json()["exercises"][0]
+        response = self.client.post(f"/api/v1/progress/exercises/{exercise['id']}/submit", json={"answer": "b"})
+        self.assertEqual(response.status_code, 401)
+
+    def test_mcq_scores_only_the_first_correct_answer(self):
+        token = make_token()
+        exercise = self.lesson_page().json()["exercises"][0]
+
+        wrong = self.submit(token, exercise["id"], answer="a").json()
+        self.assertFalse(wrong["passed"])
+        self.assertEqual(wrong["awarded"], 0)
+        self.assertIsNone(wrong["explanation"])
+        self.assertIsNone(wrong["correct_option_id"])
+        self.assertEqual(wrong["attempts"], 1)
+
+        right = self.submit(token, exercise["id"], answer="b").json()
+        self.assertTrue(right["passed"])
+        self.assertEqual(right["awarded"], exercise["points"])
+        self.assertEqual(right["correct_option_id"], "b")
+        self.assertTrue(right["explanation"])
+        self.assertEqual(right["attempts"], 2)
+
+        again = self.submit(token, exercise["id"], answer="b").json()
+        self.assertTrue(again["passed"])
+        self.assertEqual(again["awarded"], 0)
+
+        dashboard = self.client.get("/api/v1/progress/dashboard", headers=auth(token)).json()
+        self.assertEqual(dashboard["total_score"], exercise["points"])
+        self.assertEqual(dashboard["exercises_passed"], 1)
+
+    def test_mcq_explanation_is_revealed_after_three_wrong_attempts(self):
+        token = make_token()
+        exercise = self.lesson_page().json()["exercises"][0]
+        replies = [self.submit(token, exercise["id"], answer="a").json() for _ in range(3)]
+        self.assertIsNone(replies[0]["explanation"])
+        self.assertIsNone(replies[1]["explanation"])
+        self.assertTrue(replies[2]["explanation"])
+        self.assertFalse(replies[2]["passed"])
+
+    def test_mcq_rejects_unknown_option_and_missing_answer(self):
+        token = make_token()
+        exercise = self.lesson_page().json()["exercises"][0]
+        self.assertEqual(self.submit(token, exercise["id"], answer="z").status_code, 422)
+        self.assertEqual(self.submit(token, exercise["id"]).status_code, 422)
+        self.assertEqual(self.submit(token, "nope", answer="a").status_code, 404)
+
+    def test_code_submission_is_graded_per_case(self):
+        token = make_token()
+        exercise = self.lesson_page().json()["exercises"][2]
+
+        failed = self.submit(token, exercise["id"], answer="def square(x): return x", outputs=["16", "9", "1"]).json()
+        self.assertFalse(failed["passed"])
+        self.assertEqual(failed["cases"], [True, True, False])
+        self.assertEqual(failed["failed_cases"], [{"index": 2, "expected": "0"}])
+        self.assertEqual(failed["awarded"], 0)
+
+        passed = self.submit(token, exercise["id"], answer="def square(x): return x * x", outputs=["16\n", "9", "0"]).json()
+        self.assertTrue(passed["passed"])
+        self.assertEqual(passed["awarded"], exercise["points"])
+        self.assertEqual(passed["cases"], [True, True, True])
+
+    def test_code_submission_validates_shape(self):
+        token = make_token()
+        exercise = self.lesson_page().json()["exercises"][2]
+        self.assertEqual(self.submit(token, exercise["id"], answer="x", outputs=["16"]).status_code, 422)
+        self.assertEqual(self.submit(token, exercise["id"], answer="x").status_code, 422)
+        self.assertEqual(self.submit(token, exercise["id"], answer="  ", outputs=["1", "2", "3"]).status_code, 422)
+
+    def test_finishing_every_exercise_completes_the_lesson(self):
+        token = make_token()
+        page = self.lesson_page("python-basics", "hello-world").json()
+        mcq_one, code_ex, mcq_two = page["exercises"]
+        lesson_id = page["lesson"]["id"]
+
+        first = self.submit(token, mcq_one["id"], answer="b").json()
+        second = self.submit(token, code_ex["id"], answer="print('Hello, world!')", outputs=["Hello, world!"]).json()
+        self.assertEqual(first["lesson_status"], "in_progress")
+        self.assertEqual(second["lesson_status"], "in_progress")
+        third = self.submit(token, mcq_two["id"], answer="b").json()
+        self.assertEqual(third["lesson_status"], "completed")
+
+        progress = self.client.get(f"/api/v1/progress/lessons/{lesson_id}", headers=auth(token)).json()
+        self.assertEqual(progress["status"], "completed")
+        self.assertTrue(all(item["passed"] for item in progress["exercises"].values()))
+        self.assertEqual(sum(item["score"] for item in progress["exercises"].values()), 40)
+
+        course = self.client.get("/api/v1/progress/courses/python-basics", headers=auth(token)).json()
+        first_lesson, second_lesson = course["lessons"][:2]
+        self.assertEqual(first_lesson["status"], "completed")
+        self.assertEqual(first_lesson["exercises_total"], 3)
+        self.assertEqual(first_lesson["exercises_passed"], 3)
+        self.assertEqual(first_lesson["score"], 40)
+        self.assertEqual(second_lesson["status"], "not_started")
+
+        dashboard = self.client.get("/api/v1/progress/dashboard", headers=auth(token)).json()
+        self.assertEqual(dashboard["lessons_completed"], 1)
+        self.assertEqual(dashboard["total_score"], 40)
+        self.assertEqual(dashboard["exercises_passed"], 3)
+
+    def test_progress_endpoints_need_login_and_known_ids(self):
+        lesson_id = self.lesson_page().json()["lesson"]["id"]
+        self.assertEqual(self.client.get(f"/api/v1/progress/lessons/{lesson_id}").status_code, 401)
+        self.assertEqual(self.client.get("/api/v1/progress/courses/python-basics").status_code, 401)
+
+        token = make_token()
+        self.assertEqual(self.client.get("/api/v1/progress/lessons/nope", headers=auth(token)).status_code, 404)
+        self.assertEqual(self.client.get("/api/v1/progress/courses/nope", headers=auth(token)).status_code, 404)
+        fresh = self.client.get(f"/api/v1/progress/lessons/{lesson_id}", headers=auth(token)).json()
+        self.assertEqual(fresh["status"], "not_started")
+
+    def test_submit_is_rate_limited(self):
+        token = make_token()
+        exercise = self.lesson_page().json()["exercises"][0]
+        with mock.patch.object(progress_endpoint.submit_limiter, "limit", 2):
+            self.assertEqual(self.submit(token, exercise["id"], answer="a").status_code, 200)
+            self.assertEqual(self.submit(token, exercise["id"], answer="a").status_code, 200)
+            blocked = self.submit(token, exercise["id"], answer="a")
+        self.assertEqual(blocked.status_code, 429)
+        self.assertGreaterEqual(int(blocked.headers["retry-after"]), 1)
+
+    def test_content_sync_is_idempotent_and_repairs_old_rows(self):
+        from sqlalchemy import select
+
+        from app.db.session import SessionLocal
+        from app.models.content import Course, Lesson
+        from app.models.exercise import Exercise
+
+        # จำลองแถวแบบเก่าที่ seed ไว้ก่อนมีระบบ before/after
+        with SessionLocal() as db:
+            lesson = db.scalar(
+                select(Lesson)
+                .join(Course, Course.id == Lesson.course_id)
+                .where(Course.slug == "python-basics", Lesson.slug == "hello-world")
+            )
+            exercise = db.scalar(
+                select(Exercise).where(Exercise.lesson_id == lesson.id, Exercise.sort_order == 2)
+            )
+            exercise.prompt = "old prompt"
+            exercise.test_cases = [{"input": "", "expected": "Hello, world!"}]
+            db.commit()
+
+        sync_content()
+        stats = sync_content()
+        self.assertEqual(stats["lessons"], 10)
+
+        courses = {c["slug"]: c for c in self.client.get("/api/v1/content/courses").json()}
+        self.assertEqual(courses["python-basics"]["lesson_count"], 5)
+        exercises = self.lesson_page("python-basics", "hello-world").json()["exercises"]
+        self.assertEqual(len(exercises), 3)
+        self.assertNotEqual(exercises[1]["prompt"], "old prompt")
+        self.assertEqual(exercises[1]["cases"], [{"before": "", "after": ""}])
 
     # ---------------------------------------------------------------- AI ตรวจโค้ด
 
