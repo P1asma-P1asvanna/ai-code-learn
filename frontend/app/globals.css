@@ -877,6 +877,145 @@ a.card-link:hover {
   gap: 12px;
 }
 
+/* ---------- AI Tutor (แชต) ---------- */
+
+.tutor-fab {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 50;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.tutor-panel {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 50;
+  width: min(400px, calc(100vw - 32px));
+  height: min(600px, calc(100vh - 32px));
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.tutor-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tutor-close {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.tutor-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.tutor-messages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tutor-msg {
+  max-width: 92%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+
+.tutor-msg p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.tutor-msg.user {
+  align-self: flex-end;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.tutor-msg.assistant {
+  align-self: flex-start;
+}
+
+.tutor-msg .md p {
+  margin: 4px 0;
+  white-space: normal;
+}
+
+.tutor-msg .md h1,
+.tutor-msg .md h2,
+.tutor-msg .md h3 {
+  font-size: 1rem;
+  margin: 8px 0 2px;
+}
+
+.tutor-msg .md-code pre {
+  font-size: 0.82rem;
+}
+
+.quick-prompts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.tutor-foot {
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tutor-foot .switch {
+  font-weight: 400;
+}
+
+.tutor-input {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.tutor-input textarea {
+  flex: 1;
+  resize: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.92rem;
+}
+
+.tutor-foot .privacy {
+  margin: 0;
+  padding-top: 6px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

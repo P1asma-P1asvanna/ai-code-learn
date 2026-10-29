@@ -1,6 +1,7 @@
 import logging
 import math
 from datetime import date, datetime, timezone
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -11,9 +12,11 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.security import get_current_user
 from app.db.session import get_db
+from app.models.content import Course, Language, Lesson
+from app.models.exercise import Exercise
 from app.models.progress import AiUsage
 from app.models.user import User
-from app.services import ai_review
+from app.services import ai_review, ai_tutor
 from app.services.rate_limit import SlidingWindowLimiter
 
 router = APIRouter()
@@ -37,6 +40,24 @@ class ReviewIssue(BaseModel):
 class ReviewOut(BaseModel):
     summary: str
     issues: list[ReviewIssue]
+    remaining_today: int
+
+
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=4000)
+
+
+class TutorIn(BaseModel):
+    lesson_id: str | None = Field(default=None, max_length=64)
+    messages: list[ChatMessage] = Field(min_length=1, max_length=40)
+    # โค้ดและ error ที่ผู้เรียนเลือกแนบให้ AI ดู (ไม่แนบก็ได้)
+    code: str | None = Field(default=None, max_length=50000)
+    last_output: str | None = Field(default=None, max_length=10000)
+
+
+class TutorOut(BaseModel):
+    reply: str
     remaining_today: int
 
 
@@ -80,7 +101,7 @@ def _reserve_daily_request(db: Session, user_id: str) -> tuple[int, date]:
         raise _error(
             429,
             "daily_quota",
-            f"วันนี้คุณใช้ AI ตรวจโค้ดครบ {settings.AI_DAILY_REQUEST_LIMIT} ครั้งแล้ว พรุ่งนี้มาใหม่นะ",
+            f"วันนี้คุณใช้ AI ครบ {settings.AI_DAILY_REQUEST_LIMIT} ครั้งแล้ว พรุ่งนี้มาใหม่นะ",
         )
     db.commit()
     return count, today
@@ -169,5 +190,84 @@ def review_code(
     return ReviewOut(
         summary=result["summary"],
         issues=[ReviewIssue(**issue) for issue in result["issues"]],
+        remaining_today=max(settings.AI_DAILY_REQUEST_LIMIT - count, 0),
+    )
+
+
+@router.post("/tutor", response_model=TutorOut)
+def ask_tutor(
+    payload: TutorIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """แชตกับ AI Tutor — ใช้โควต้ารายวัน/รายนาทีก้อนเดียวกับ AI ตรวจโค้ด (นับ 1 ข้อความ = 1 ครั้ง)"""
+    if not settings.ai_configured:
+        raise _error(503, "ai_disabled", "ระบบ AI ยังไม่ได้เปิดใช้งาน")
+    if payload.messages[-1].role != "user":
+        raise HTTPException(422, "ข้อความสุดท้ายต้องเป็นของผู้เรียน")
+
+    # บริบทบทเรียนอ่านจากฐานข้อมูลเอง (ไม่เชื่อข้อความที่ frontend ส่งมา)
+    course_title = lesson_title = language = lesson_md = ""
+    exercise_prompts: list[str] = []
+    if payload.lesson_id:
+        lesson = db.get(Lesson, payload.lesson_id)
+        if lesson is None:
+            raise HTTPException(404, "Lesson not found")
+        course = db.get(Course, lesson.course_id)
+        language_row = db.get(Language, course.language_id) if course else None
+        course_title = course.title if course else ""
+        lesson_title = lesson.title
+        language = language_row.name if language_row else ""
+        lesson_md = lesson.content_md
+        exercises = db.scalars(
+            select(Exercise).where(Exercise.lesson_id == lesson.id).order_by(Exercise.sort_order)
+        ).all()
+        exercise_prompts = ai_tutor.exercise_prompt_list(list(exercises))
+
+    wait = minute_limiter.check(user.id)
+    if wait > 0:
+        seconds = math.ceil(wait)
+        raise _error(
+            429,
+            "rate_limited",
+            f"ส่งถี่เกินไป รออีกประมาณ {seconds} วินาทีแล้วลองใหม่",
+            headers={"Retry-After": str(seconds)},
+        )
+
+    count, today = _reserve_daily_request(db, user.id)
+
+    context = ai_tutor.build_context(
+        course_title=course_title,
+        lesson_title=lesson_title,
+        language=language,
+        lesson_md=lesson_md,
+        exercise_prompts=exercise_prompts,
+        code=payload.code,
+        last_output=payload.last_output,
+        max_code_chars=settings.AI_MAX_CODE_CHARS,
+    )
+    messages = ai_tutor.build_messages([m.model_dump() for m in payload.messages], context)
+    try:
+        raw, tokens = ai_review.call_chat_completion(
+            base_url=settings.AI_BASE_URL,
+            api_key=settings.AI_API_KEY,
+            model=settings.AI_MODEL,
+            messages=messages,
+            max_tokens=settings.AI_MAX_OUTPUT_TOKENS,
+            timeout=settings.AI_TIMEOUT_SECONDS,
+            json_mode=False,  # แชตตอบเป็นข้อความธรรมดา ไม่ใช่ JSON
+            extra_body=settings.ai_extra_body,
+        )
+    except ai_review.AiProviderBusy:
+        _refund_daily_request(db, user.id, today)
+        raise _error(503, "provider_busy", "AI กำลังมีผู้ใช้งานหนาแน่น ลองใหม่อีกสักครู่นะ")
+    except ai_review.AiProviderError as exc:
+        logger.warning("AI provider error (tutor): %s", exc)
+        _refund_daily_request(db, user.id, today)
+        raise _error(502, "provider_error", "ติดต่อ AI ไม่สำเร็จ ลองใหม่อีกครั้งนะ")
+
+    _add_tokens(db, user.id, today, tokens)
+    return TutorOut(
+        reply=ai_tutor.clean_reply(raw),
         remaining_today=max(settings.AI_DAILY_REQUEST_LIMIT - count, 0),
     )

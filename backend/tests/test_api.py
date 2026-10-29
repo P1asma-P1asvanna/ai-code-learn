@@ -441,5 +441,91 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.json()["detail"]["code"], "ai_disabled")
 
 
+    # ---------------------------------------------------------------- AI Tutor (แชต)
+
+    def tutor(self, token: str, **overrides):
+        body = {"messages": [{"role": "user", "content": "ช่วยอธิบาย def หน่อย"}]}
+        body.update(overrides)
+        return self.client.post("/api/v1/ai/tutor", json=body, headers=auth(token))
+
+    def test_tutor_requires_login(self):
+        response = self.client.post("/api/v1/ai/tutor", json={"messages": [{"role": "user", "content": "hi"}]})
+        self.assertEqual(response.status_code, 401)
+
+    def test_tutor_replies_and_shares_the_daily_quota(self):
+        token = make_token()
+        with mock.patch.object(ai_review, "call_chat_completion", return_value=("**def** ใช้สร้างฟังก์ชัน", 40)) as call:
+            chat = self.tutor(token)
+            review = self.review(token)
+        self.assertEqual(chat.status_code, 200)
+        self.assertEqual(chat.json()["reply"], "**def** ใช้สร้างฟังก์ชัน")
+        self.assertEqual(chat.json()["remaining_today"], settings.AI_DAILY_REQUEST_LIMIT - 1)
+        self.assertEqual(review.json()["remaining_today"], settings.AI_DAILY_REQUEST_LIMIT - 2)
+        # แชตตอบเป็นข้อความ ไม่ขอ JSON mode
+        self.assertFalse(call.call_args_list[0].kwargs["json_mode"])
+
+    def test_tutor_builds_context_from_the_database_not_the_client(self):
+        token = make_token()
+        page = self.lesson_page("python-basics", "functions").json()
+        with mock.patch.object(ai_review, "call_chat_completion", return_value=("ok", 1)) as call:
+            response = self.tutor(
+                token,
+                lesson_id=page["lesson"]["id"],
+                code="def square(x):\n    pass",
+                last_output="NameError: x",
+            )
+        self.assertEqual(response.status_code, 200)
+        messages = call.call_args.kwargs["messages"]
+        system = messages[0]["content"]
+        self.assertEqual(messages[0]["role"], "system")
+        self.assertIn("ฟังก์ชัน", system)
+        self.assertIn("เขียนฟังก์ชัน `square(x)`", system)  # โจทย์แบบฝึกหัดอยู่ในบริบท
+        self.assertIn("1| def square(x):", system)
+        self.assertIn("NameError: x", system)
+        self.assertNotIn("return x * x", system)  # เฉลยไม่อยู่ในบริบท
+        self.assertEqual(messages[-1], {"role": "user", "content": "ช่วยอธิบาย def หน่อย"})
+
+    def test_tutor_without_code_does_not_send_code(self):
+        token = make_token()
+        with mock.patch.object(ai_review, "call_chat_completion", return_value=("ok", 1)) as call:
+            self.tutor(token, last_output="Error ที่ไม่ควรถูกส่ง")
+        system = call.call_args.kwargs["messages"][0]["content"]
+        self.assertNotIn("<code>", system)
+        self.assertNotIn("Error ที่ไม่ควรถูกส่ง", system)
+
+    def test_tutor_validates_input(self):
+        token = make_token()
+        last_is_assistant = [{"role": "user", "content": "hi"}, {"role": "assistant", "content": "hello"}]
+        self.assertEqual(self.tutor(token, messages=last_is_assistant).status_code, 422)
+        self.assertEqual(self.tutor(token, messages=[]).status_code, 422)
+        self.assertEqual(self.tutor(token, messages=[{"role": "system", "content": "x"}]).status_code, 422)
+        self.assertEqual(self.tutor(token, messages=[{"role": "user", "content": ""}]).status_code, 422)
+        self.assertEqual(self.tutor(token, lesson_id="nope").status_code, 404)
+
+    def test_tutor_provider_failure_is_refunded(self):
+        token = make_token()
+        with mock.patch.object(ai_review, "call_chat_completion", side_effect=ai_review.AiProviderError("boom")):
+            failed = self.tutor(token)
+        self.assertEqual(failed.status_code, 502)
+        with mock.patch.object(ai_review, "call_chat_completion", return_value=("ok", 1)):
+            ok = self.tutor(token)
+        self.assertEqual(ok.json()["remaining_today"], settings.AI_DAILY_REQUEST_LIMIT - 1)
+
+    def test_tutor_respects_limits_and_disabled_state(self):
+        token = make_token()
+        with mock.patch.object(settings, "AI_DAILY_REQUEST_LIMIT", 1), mock.patch.object(
+            ai_review, "call_chat_completion", return_value=("ok", 1)
+        ):
+            self.assertEqual(self.tutor(token).status_code, 200)
+            blocked = self.tutor(token)
+        self.assertEqual(blocked.status_code, 429)
+        self.assertEqual(blocked.json()["detail"]["code"], "daily_quota")
+
+        with mock.patch.object(settings, "AI_API_KEY", ""):
+            disabled = self.tutor(make_token())
+        self.assertEqual(disabled.status_code, 503)
+        self.assertEqual(disabled.json()["detail"]["code"], "ai_disabled")
+
+
 if __name__ == "__main__":
     unittest.main()

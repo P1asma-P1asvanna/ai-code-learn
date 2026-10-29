@@ -32,3 +32,22 @@ export function requestReview(
     signal,
   });
 }
+
+// ---- AI Tutor (แชต) ----
+
+export type ChatMessage = { role: "user" | "assistant"; content: string };
+
+export type TutorReply = { reply: string; remaining_today: number };
+
+export function requestTutor(
+  token: string,
+  body: { lesson_id?: string; messages: ChatMessage[]; code?: string | null; last_output?: string | null },
+  signal: AbortSignal,
+) {
+  return apiFetch<TutorReply>("/ai/tutor", {
+    method: "POST",
+    token,
+    body: JSON.stringify(body),
+    signal,
+  });
+}

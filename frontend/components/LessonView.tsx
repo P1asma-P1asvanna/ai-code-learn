@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import CodeEditor from "@/components/CodeEditor";
 import Markdown, { InlineText } from "@/components/Markdown";
+import TutorChat from "@/components/TutorChat";
 import { ApiError } from "@/lib/api";
 import { buildSource, runCases, type CaseRun } from "@/lib/grader";
 import {
@@ -272,6 +273,12 @@ export default function LessonView({ page }: { page: LessonPage }) {
   const active = tabs[activeTab] ?? tabs[FREE_TAB];
   const activeExercise = codeExercises.find((e) => e.id === activeTab) ?? null;
   const isBusyHere = busy?.tab === activeTab;
+  // error จากการรันล่าสุดของตัวแก้ไขที่เปิดอยู่ ส่งให้ AI Tutor ใช้อธิบาย (เฉพาะเมื่อผู้เรียนเปิดสวิตช์แนบโค้ด)
+  const activeError =
+    active.output
+      .filter((line) => line.kind === "stderr")
+      .map((line) => line.text)
+      .join("\n") || null;
   const outputPane = (
     <pre className="output" aria-live="polite">
       {active.output.length === 0 ? (
@@ -483,6 +490,8 @@ export default function LessonView({ page }: { page: LessonPage }) {
           )}
         </aside>
       </div>
+
+      <TutorChat lessonId={lesson.id} code={runnableLanguage ? active.code : null} lastError={activeError} />
     </main>
   );
 }
