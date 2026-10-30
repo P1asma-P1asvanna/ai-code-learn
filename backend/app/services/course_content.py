@@ -816,6 +816,303 @@ JS_LESSONS = [
     },
 ]
 
+PY_LISTS = r'''# ลิสต์ (list)
+
+ลิสต์คือ “รายการ” ที่เก็บค่าได้หลายค่าในตัวแปรเดียว เขียนในวงเล็บเหลี่ยม `[ ]` คั่นด้วยจุลภาค
+
+```python
+fruits = ["ส้ม", "กล้วย", "มะม่วง"]
+print(fruits)
+print(len(fruits))
+```
+
+## ดึงค่าด้วยตำแหน่ง (index)
+
+ตำแหน่งเริ่มนับที่ **0** และใช้เลขลบนับจากท้ายได้
+
+```python
+fruits = ["ส้ม", "กล้วย", "มะม่วง"]
+print(fruits[0])
+print(fruits[2])
+print(fruits[-1])
+```
+
+## เพิ่ม แก้ และลบ
+
+```python
+nums = [10, 20, 30]
+nums.append(40)
+nums[0] = 99
+nums.remove(20)
+print(nums)
+```
+
+## วนซ้ำในลิสต์
+
+```python
+for n in [1, 2, 3]:
+    print(n * 2)
+```
+
+ฟังก์ชันที่ใช้บ่อย: `len(x)` นับจำนวน, `sum(x)` รวมค่า, `max(x)` / `min(x)` ค่ามาก/น้อยสุด, `sorted(x)` เรียงลำดับ
+'''
+
+PY_DICTS = r'''# ดิกชันนารี (dict)
+
+ดิกชันนารีเก็บข้อมูลเป็นคู่ **คีย์ : ค่า** เหมือนสมุดโทรศัพท์ที่หาจากชื่อ เขียนในวงเล็บปีกกา `{ }`
+
+```python
+student = {"name": "มะลิ", "age": 20}
+print(student["name"])
+print(student["age"])
+```
+
+## เพิ่ม แก้ และลบ
+
+```python
+student = {"name": "มะลิ", "age": 20}
+student["age"] = 21
+student["city"] = "เชียงใหม่"
+del student["name"]
+print(student)
+```
+
+## เช็คว่ามีคีย์ไหม
+
+ถ้าเรียกคีย์ที่ไม่มีตรง ๆ จะเกิด error ให้ใช้ `in` เช็คก่อน หรือใช้ `.get()` ที่ไม่ error
+
+```python
+student = {"name": "มะลิ"}
+print("name" in student)
+print("age" in student)
+print(student.get("age", 0))
+```
+
+## วนซ้ำใน dict
+
+```python
+scores = {"มะลิ": 80, "ต้น": 65}
+for name, score in scores.items():
+    print(name, score)
+```
+'''
+
+JS_ARRAYS = r'''# อาร์เรย์ (array)
+
+อาร์เรย์คือ “รายการ” ที่เก็บค่าได้หลายค่าในตัวแปรเดียว เขียนในวงเล็บเหลี่ยม `[ ]` คั่นด้วยจุลภาค
+
+```javascript
+const fruits = ["ส้ม", "กล้วย", "มะม่วง"];
+console.log(fruits);
+console.log(fruits.length);
+```
+
+## ดึงค่าด้วยตำแหน่ง (index)
+
+ตำแหน่งเริ่มนับที่ **0**
+
+```javascript
+const fruits = ["ส้ม", "กล้วย", "มะม่วง"];
+console.log(fruits[0]);
+console.log(fruits[2]);
+console.log(fruits[fruits.length - 1]);
+```
+
+## เพิ่ม แก้ และลบ
+
+```javascript
+const nums = [10, 20, 30];
+nums.push(40);
+nums[0] = 99;
+nums.pop();
+console.log(nums);
+```
+
+## วนซ้ำในอาร์เรย์
+
+```javascript
+for (const n of [1, 2, 3]) {
+  console.log(n * 2);
+}
+
+const doubled = [1, 2, 3].map((n) => n * 2);
+console.log(doubled);
+```
+
+`const` กับอาร์เรย์: ห้ามกำหนดอาร์เรย์ใหม่ทับตัวแปร แต่เพิ่ม/แก้สมาชิกข้างในได้
+'''
+
+JS_OBJECTS = r'''# ออบเจ็กต์ (object)
+
+ออบเจ็กต์เก็บข้อมูลเป็นคู่ **คีย์ : ค่า** เหมือนสมุดโทรศัพท์ที่หาจากชื่อ เขียนในวงเล็บปีกกา `{ }`
+
+```javascript
+const student = { name: "มะลิ", age: 20 };
+console.log(student.name);
+console.log(student["age"]);
+```
+
+## เพิ่ม แก้ และลบ
+
+```javascript
+const student = { name: "มะลิ", age: 20 };
+student.age = 21;
+student.city = "เชียงใหม่";
+delete student.name;
+console.log(student);
+```
+
+## เช็คว่ามีคีย์ไหม
+
+คีย์ที่ไม่มีจะได้ `undefined` ใช้ `in` เช็คได้
+
+```javascript
+const student = { name: "มะลิ" };
+console.log("name" in student);
+console.log("age" in student);
+console.log(student.age);
+```
+
+## วนซ้ำในออบเจ็กต์
+
+```javascript
+const scores = { มะลิ: 80, ต้น: 65 };
+for (const [name, score] of Object.entries(scores)) {
+  console.log(name, score);
+}
+```
+'''
+
+PY_LESSONS += [
+    {
+        "slug": "lists",
+        "title": "ลิสต์ (list)",
+        "minutes": 12,
+        "starter": "fruits = [\"ส้ม\", \"กล้วย\", \"มะม่วง\"]\nfruits.append(\"องุ่น\")\nprint(fruits)\nprint(len(fruits))\n",
+        "content": PY_LISTS,
+        "exercises": [
+            mcq(
+                "ถ้า `nums = [5, 6, 7]` แล้ว `nums[0]` ได้ค่าอะไร",
+                ["5", "6", "7", "0"],
+                0,
+                "ตำแหน่งในลิสต์เริ่มนับที่ 0 จึงได้สมาชิกตัวแรกคือ 5",
+            ),
+            mcq(
+                "เมธอดใดใช้เพิ่มสมาชิกไว้ท้ายลิสต์",
+                ["add()", "append()", "push()", "insert_last()"],
+                1,
+                "Python ใช้ .append() (ส่วน push() เป็นของ JavaScript)",
+            ),
+            code(
+                "เขียนฟังก์ชัน `average(nums)` ที่คืนค่าเฉลี่ยของตัวเลขในลิสต์ (ระบบจะเรียกฟังก์ชันของคุณให้ ไม่ต้อง print เอง)",
+                "def average(nums):\n    # เขียนโค้ดตรงนี้\n    pass\n",
+                [
+                    {"after": "print(average([2, 4, 6]))", "expected": "4.0"},
+                    {"after": "print(average([10]))", "expected": "10.0"},
+                    {"after": "print(average([1, 2]))", "expected": "1.5"},
+                ],
+                "คำตอบ: return sum(nums) / len(nums) ใน Python การหารด้วย / ได้ทศนิยมเสมอ",
+            ),
+        ],
+    },
+    {
+        "slug": "dictionaries",
+        "title": "ดิกชันนารี (dict)",
+        "minutes": 12,
+        "starter": "student = {\"name\": \"มะลิ\", \"age\": 20}\nstudent[\"city\"] = \"เชียงใหม่\"\nprint(student)\n",
+        "content": PY_DICTS,
+        "exercises": [
+            mcq(
+                "ดิกชันนารีเก็บข้อมูลในรูปแบบใด",
+                ["ตำแหน่ง : ค่า", "คีย์ : ค่า", "ชื่อ : ชนิด", "ลำดับ : คีย์"],
+                1,
+                "dict เก็บเป็นคู่ คีย์ : ค่า และหาค่าจากคีย์",
+            ),
+            mcq(
+                "ถ้า `d = {\"a\": 1}` แล้วอยากได้ 0 เมื่อไม่มีคีย์ `\"b\"` โดยไม่เกิด error ควรเขียนอย่างไร",
+                ["d[\"b\"]", "d.get(\"b\", 0)", "d.find(\"b\")", "d(\"b\")"],
+                1,
+                ".get(คีย์, ค่าเริ่มต้น) คืนค่าเริ่มต้นเมื่อไม่มีคีย์ ส่วน d[\"b\"] จะเกิด KeyError",
+            ),
+            code(
+                "เขียนฟังก์ชัน `count_words(words)` ที่รับลิสต์ของคำ แล้วคืน dict ที่บอกว่าแต่ละคำปรากฏกี่ครั้ง เช่น `[\"a\", \"b\", \"a\"]` ได้ `{\"a\": 2, \"b\": 1}`",
+                "def count_words(words):\n    counts = {}\n    # เขียนโค้ดตรงนี้\n    return counts\n",
+                [
+                    {"after": "c = count_words([\"a\", \"b\", \"a\"])\nprint(c[\"a\"], c[\"b\"])", "expected": "2 1"},
+                    {"after": "c = count_words([\"x\", \"x\", \"x\"])\nprint(c[\"x\"], len(c))", "expected": "3 1"},
+                    {"after": "print(len(count_words([])))", "expected": "0"},
+                ],
+                "คำตอบ: วนทีละคำ แล้ว counts[w] = counts.get(w, 0) + 1",
+            ),
+        ],
+    },
+]
+
+JS_LESSONS += [
+    {
+        "slug": "arrays",
+        "title": "อาร์เรย์ (array)",
+        "minutes": 12,
+        "starter": "const fruits = [\"ส้ม\", \"กล้วย\", \"มะม่วง\"];\nfruits.push(\"องุ่น\");\nconsole.log(fruits);\nconsole.log(fruits.length);\n",
+        "content": JS_ARRAYS,
+        "exercises": [
+            mcq(
+                "ถ้า `const nums = [5, 6, 7];` แล้ว `nums[0]` ได้ค่าอะไร",
+                ["5", "6", "7", "0"],
+                0,
+                "ตำแหน่งในอาร์เรย์เริ่มนับที่ 0 จึงได้สมาชิกตัวแรกคือ 5",
+            ),
+            mcq(
+                "เมธอดใดใช้เพิ่มสมาชิกไว้ท้ายอาร์เรย์",
+                ["append()", "add()", "push()", "insertLast()"],
+                2,
+                "JavaScript ใช้ .push() (ส่วน append() เป็นของ Python)",
+            ),
+            code(
+                "เขียนฟังก์ชัน `average(nums)` ที่คืนค่าเฉลี่ยของตัวเลขในอาร์เรย์ (ระบบจะเรียกฟังก์ชันของคุณให้ ไม่ต้อง console.log เอง)",
+                "function average(nums) {\n  // เขียนโค้ดตรงนี้\n}\n",
+                [
+                    {"after": "console.log(average([2, 4, 6]));", "expected": "4"},
+                    {"after": "console.log(average([10]));", "expected": "10"},
+                    {"after": "console.log(average([1, 2]));", "expected": "1.5"},
+                ],
+                "คำตอบ: รวมค่าด้วย loop หรือ reduce แล้วหารด้วย nums.length เช่น return nums.reduce((a, b) => a + b, 0) / nums.length;",
+            ),
+        ],
+    },
+    {
+        "slug": "objects",
+        "title": "ออบเจ็กต์ (object)",
+        "minutes": 12,
+        "starter": "const student = { name: \"มะลิ\", age: 20 };\nstudent.city = \"เชียงใหม่\";\nconsole.log(student);\n",
+        "content": JS_OBJECTS,
+        "exercises": [
+            mcq(
+                "ออบเจ็กต์เก็บข้อมูลในรูปแบบใด",
+                ["ตำแหน่ง : ค่า", "คีย์ : ค่า", "ชื่อ : ชนิด", "ลำดับ : คีย์"],
+                1,
+                "ออบเจ็กต์เก็บเป็นคู่ คีย์ : ค่า และหาค่าจากคีย์",
+            ),
+            mcq(
+                "ถ้า `const o = { a: 1 };` แล้ว `o.b` ได้ค่าอะไร",
+                ["0", "null", "undefined", "เกิด Error"],
+                2,
+                "คีย์ที่ไม่มีอยู่ในออบเจ็กต์จะได้ undefined ไม่เกิด error",
+            ),
+            code(
+                "เขียนฟังก์ชัน `countWords(words)` ที่รับอาร์เรย์ของคำ แล้วคืนออบเจ็กต์ที่บอกว่าแต่ละคำปรากฏกี่ครั้ง เช่น `[\"a\", \"b\", \"a\"]` ได้ `{ a: 2, b: 1 }`",
+                "function countWords(words) {\n  const counts = {};\n  // เขียนโค้ดตรงนี้\n  return counts;\n}\n",
+                [
+                    {"after": "const c = countWords([\"a\", \"b\", \"a\"]);\nconsole.log(c.a, c.b);", "expected": "2 1"},
+                    {"after": "const c = countWords([\"x\", \"x\", \"x\"]);\nconsole.log(c.x, Object.keys(c).length);", "expected": "3 1"},
+                    {"after": "console.log(Object.keys(countWords([])).length);", "expected": "0"},
+                ],
+                "คำตอบ: วนทีละคำ แล้ว counts[w] = (counts[w] || 0) + 1;",
+            ),
+        ],
+    },
+]
+
 COURSES = [
     {
         "language": "python",
