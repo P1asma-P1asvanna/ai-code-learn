@@ -454,7 +454,8 @@ class ApiTests(unittest.TestCase):
 
     def test_tutor_replies_and_shares_the_daily_quota(self):
         token = make_token()
-        with mock.patch.object(ai_review, "call_chat_completion", return_value=("**def** ใช้สร้างฟังก์ชัน", 40)) as call:
+        replies = [("**def** ใช้สร้างฟังก์ชัน", 40), (FAKE_AI_REPLY, 30)]
+        with mock.patch.object(ai_review, "call_chat_completion", side_effect=replies) as call:
             chat = self.tutor(token)
             review = self.review(token)
         self.assertEqual(chat.status_code, 200)
