@@ -390,6 +390,9 @@ export default function LessonView({ page }: { page: LessonPage }) {
               </button>
             ) : null}
             {lessonStatus === "completed" ? <span className="ok">✓ เรียนจบบทนี้แล้ว</span> : null}
+            {lessonStatus === "completed" && !next ? (
+              <span className="small">🎉 นี่คือบทสุดท้ายของคอร์ส ดูสรุปได้ที่หน้ารายการบทเรียน</span>
+            ) : null}
             <div className="spacer" />
             {prev ? (
               <Link className="btn" href={`/lessons/${course.slug}/${prev.slug}`}>

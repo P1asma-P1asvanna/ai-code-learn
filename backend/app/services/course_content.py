@@ -1113,6 +1113,348 @@ JS_LESSONS += [
     },
 ]
 
+PY_STRINGS = r'''# สตริง (ข้อความ)
+
+สตริงคือข้อความ ครอบด้วย `"` หรือ `'` และดึงตัวอักษรด้วยตำแหน่งได้เหมือนลิสต์ (เริ่มนับที่ 0)
+
+```python
+word = "Python"
+print(word[0])
+print(word[-1])
+print(len(word))
+```
+
+## ตัดช่วงข้อความ (slice)
+
+`ข้อความ[เริ่ม:จบ]` ได้ตั้งแต่ตำแหน่งเริ่ม ถึง *ก่อน* ตำแหน่งจบ
+
+```python
+word = "Python"
+print(word[0:2])
+print(word[2:])
+print(word[::-1])
+```
+
+`[::-1]` คือกลับด้านข้อความ
+
+## เมธอดที่ใช้บ่อย
+
+```python
+text = "  Hello, World  "
+print(text.strip())
+print(text.upper())
+print(text.lower())
+print(text.replace("World", "Python"))
+print("a,b,c".split(","))
+print("-".join(["a", "b", "c"]))
+```
+
+## ตรวจว่ามีข้อความย่อยไหม
+
+```python
+print("lo" in "Hello")
+print("Hello".startswith("He"))
+```
+
+สตริง **แก้ไขตัวอักษรตรง ๆ ไม่ได้** เมธอดต่าง ๆ จะคืนข้อความใหม่ออกมาเสมอ
+'''
+
+PY_ERRORS = r'''# จัดการข้อผิดพลาด (try / except)
+
+บางครั้งโปรแกรมเจอสถานการณ์ที่ทำต่อไม่ได้ เช่น แปลงข้อความ "abc" เป็นตัวเลข Python จะ **โยน error** และโปรแกรมหยุดทันที
+
+```python
+number = int("abc")
+print("ไม่ถึงบรรทัดนี้")
+```
+
+## try / except
+
+ใส่โค้ดที่เสี่ยงไว้ใน `try` แล้วบอกใน `except` ว่าถ้าพังให้ทำอะไร โปรแกรมจะไม่หยุด
+
+```python
+try:
+    number = int("abc")
+    print(number)
+except ValueError:
+    print("แปลงเป็นตัวเลขไม่ได้")
+
+print("โปรแกรมทำงานต่อ")
+```
+
+## ระบุชนิดของ error
+
+ควรระบุชนิดให้ตรง เช่น `ValueError` (ค่าไม่ถูกรูปแบบ), `ZeroDivisionError` (หารด้วยศูนย์), `KeyError` (ไม่มีคีย์ใน dict)
+
+```python
+try:
+    print(10 / 0)
+except ZeroDivisionError:
+    print("หารด้วยศูนย์ไม่ได้")
+```
+
+## finally
+
+โค้ดใน `finally` ทำงานเสมอ ไม่ว่าจะพังหรือไม่
+
+```python
+try:
+    print("ลองทำ")
+except ValueError:
+    print("พัง")
+finally:
+    print("จบการทำงาน")
+```
+'''
+
+JS_STRINGS = r'''# สตริง (ข้อความ)
+
+สตริงคือข้อความ ครอบด้วย `"` `'` หรือ backtick และดึงตัวอักษรด้วยตำแหน่งได้ (เริ่มนับที่ 0)
+
+```javascript
+const word = "JavaScript";
+console.log(word[0]);
+console.log(word[word.length - 1]);
+console.log(word.length);
+```
+
+## ตัดช่วงข้อความ
+
+`slice(เริ่ม, จบ)` ได้ตั้งแต่ตำแหน่งเริ่ม ถึง *ก่อน* ตำแหน่งจบ
+
+```javascript
+const word = "JavaScript";
+console.log(word.slice(0, 4));
+console.log(word.slice(4));
+console.log(word.slice(-6));
+```
+
+## เมธอดที่ใช้บ่อย
+
+```javascript
+const text = "  Hello, World  ";
+console.log(text.trim());
+console.log(text.toUpperCase());
+console.log(text.toLowerCase());
+console.log(text.replace("World", "JS"));
+console.log("a,b,c".split(","));
+console.log(["a", "b", "c"].join("-"));
+```
+
+## ตรวจว่ามีข้อความย่อยไหม
+
+```javascript
+console.log("Hello".includes("ell"));
+console.log("Hello".startsWith("He"));
+```
+
+กลับด้านข้อความ: แยกเป็นอาร์เรย์ → กลับ → รวมกลับ
+
+```javascript
+console.log("abc".split("").reverse().join(""));
+```
+
+สตริง **แก้ไขตัวอักษรตรง ๆ ไม่ได้** เมธอดต่าง ๆ จะคืนข้อความใหม่ออกมาเสมอ
+'''
+
+JS_ERRORS = r'''# จัดการข้อผิดพลาด (try / catch)
+
+บางครั้งโปรแกรมเจอสถานการณ์ที่ทำต่อไม่ได้ เช่น แปลงข้อความที่ไม่ใช่ JSON ด้วย `JSON.parse` JavaScript จะ **โยน error** และโปรแกรมหยุดทันที
+
+```javascript
+const data = JSON.parse("abc");
+console.log("ไม่ถึงบรรทัดนี้");
+```
+
+## try / catch
+
+ใส่โค้ดที่เสี่ยงไว้ใน `try` แล้วบอกใน `catch` ว่าถ้าพังให้ทำอะไร โปรแกรมจะไม่หยุด
+
+```javascript
+try {
+  const data = JSON.parse("abc");
+  console.log(data);
+} catch (error) {
+  console.log("อ่าน JSON ไม่ได้");
+}
+
+console.log("โปรแกรมทำงานต่อ");
+```
+
+## ดูข้อความของ error
+
+```javascript
+try {
+  null.name;
+} catch (error) {
+  console.log(error.name);
+}
+```
+
+## โยน error เอง
+
+ใช้ `throw` เมื่อพบค่าที่ไม่ยอมรับ
+
+```javascript
+function divide(a, b) {
+  if (b === 0) {
+    throw new Error("หารด้วยศูนย์ไม่ได้");
+  }
+  return a / b;
+}
+
+try {
+  divide(1, 0);
+} catch (error) {
+  console.log(error.message);
+}
+```
+
+## finally
+
+โค้ดใน `finally` ทำงานเสมอ ไม่ว่าจะพังหรือไม่
+'''
+
+PY_LESSONS += [
+    {
+        "slug": "strings",
+        "title": "สตริง (ข้อความ)",
+        "minutes": 12,
+        "starter": "word = \"Python\"\nprint(word[0])\nprint(word.upper())\nprint(word[::-1])\n",
+        "content": PY_STRINGS,
+        "exercises": [
+            mcq(
+                "ถ้า `s = \"Hello\"` แล้ว `s[1:3]` ได้อะไร",
+                ["\"He\"", "\"el\"", "\"ell\"", "\"Hel\""],
+                1,
+                "slice เริ่มที่ตำแหน่ง 1 ถึงก่อนตำแหน่ง 3 จึงได้ตำแหน่ง 1 และ 2 คือ \"el\"",
+            ),
+            mcq(
+                "ข้อใดเป็นจริงเกี่ยวกับสตริงใน Python",
+                [
+                    "แก้ตัวอักษรตำแหน่งที่ 0 ได้ด้วย s[0] = \"X\"",
+                    "เมธอดอย่าง upper() คืนข้อความใหม่ ไม่ได้แก้ข้อความเดิม",
+                    "ใช้ได้เฉพาะเครื่องหมาย \" ไม่ใช่ '",
+                    "นับความยาวไม่ได้",
+                ],
+                1,
+                "สตริงแก้ตรง ๆ ไม่ได้ (immutable) เมธอดต่าง ๆ จึงคืนข้อความใหม่เสมอ",
+            ),
+            code(
+                "เขียนฟังก์ชัน `is_palindrome(s)` ที่คืน `True` ถ้าข้อความอ่านจากหน้าไปหลังกับหลังไปหน้าได้เหมือนกัน (เช่น \"abba\") ไม่งั้นคืน `False` (ระบบจะเรียกฟังก์ชันของคุณให้ ไม่ต้อง print เอง)",
+                "def is_palindrome(s):\n    # เขียนโค้ดตรงนี้\n    pass\n",
+                [
+                    {"after": "print(is_palindrome(\"abba\"))", "expected": "True"},
+                    {"after": "print(is_palindrome(\"abc\"))", "expected": "False"},
+                    {"after": "print(is_palindrome(\"a\"))", "expected": "True"},
+                ],
+                "คำตอบ: return s == s[::-1] (เทียบข้อความกับข้อความที่กลับด้านแล้ว)",
+            ),
+        ],
+    },
+    {
+        "slug": "errors",
+        "title": "จัดการข้อผิดพลาด (try / except)",
+        "minutes": 12,
+        "starter": "try:\n    number = int(\"abc\")\n    print(number)\nexcept ValueError:\n    print(\"แปลงเป็นตัวเลขไม่ได้\")\n",
+        "content": PY_ERRORS,
+        "exercises": [
+            mcq(
+                "คำสั่งใดใช้ดักจับ error ใน Python",
+                ["catch", "except", "rescue", "handle"],
+                1,
+                "Python ใช้ try ... except (ส่วน catch เป็นของ JavaScript)",
+            ),
+            mcq(
+                "ข้อใดมักทำให้เกิด `ZeroDivisionError`",
+                ["int(\"abc\")", "10 / 0", "d[\"ไม่มีคีย์นี้\"]", "len(5)"],
+                1,
+                "การหารด้วยศูนย์ทำให้เกิด ZeroDivisionError",
+            ),
+            code(
+                "เขียนฟังก์ชัน `safe_int(text)` ที่แปลงข้อความเป็นจำนวนเต็ม ถ้าแปลงไม่ได้ให้คืน `0` (ระบบจะเรียกฟังก์ชันของคุณให้ ไม่ต้อง print เอง)",
+                "def safe_int(text):\n    # เขียนโค้ดตรงนี้\n    pass\n",
+                [
+                    {"after": "print(safe_int(\"42\"))", "expected": "42"},
+                    {"after": "print(safe_int(\"abc\"))", "expected": "0"},
+                    {"after": "print(safe_int(\"\"))", "expected": "0"},
+                ],
+                "คำตอบ: try: return int(text) / except ValueError: return 0",
+            ),
+        ],
+    },
+]
+
+JS_LESSONS += [
+    {
+        "slug": "strings",
+        "title": "สตริง (ข้อความ)",
+        "minutes": 12,
+        "starter": "const word = \"JavaScript\";\nconsole.log(word[0]);\nconsole.log(word.toUpperCase());\nconsole.log(word.slice(0, 4));\n",
+        "content": JS_STRINGS,
+        "exercises": [
+            mcq(
+                "ถ้า `const s = \"Hello\";` แล้ว `s.slice(1, 3)` ได้อะไร",
+                ["\"He\"", "\"el\"", "\"ell\"", "\"Hel\""],
+                1,
+                "slice เริ่มที่ตำแหน่ง 1 ถึงก่อนตำแหน่ง 3 จึงได้ตำแหน่ง 1 และ 2 คือ \"el\"",
+            ),
+            mcq(
+                "ข้อใดเป็นจริงเกี่ยวกับสตริงใน JavaScript",
+                [
+                    "แก้ตัวอักษรตำแหน่งที่ 0 ได้ด้วย s[0] = \"X\"",
+                    "เมธอดอย่าง toUpperCase() คืนข้อความใหม่ ไม่ได้แก้ข้อความเดิม",
+                    "ใช้ได้เฉพาะเครื่องหมาย \" ไม่ใช่ '",
+                    "นับความยาวไม่ได้",
+                ],
+                1,
+                "สตริงแก้ตรง ๆ ไม่ได้ (immutable) เมธอดต่าง ๆ จึงคืนข้อความใหม่เสมอ",
+            ),
+            code(
+                "เขียนฟังก์ชัน `isPalindrome(s)` ที่คืน `true` ถ้าข้อความอ่านจากหน้าไปหลังกับหลังไปหน้าได้เหมือนกัน (เช่น \"abba\") ไม่งั้นคืน `false` (ระบบจะเรียกฟังก์ชันของคุณให้ ไม่ต้อง console.log เอง)",
+                "function isPalindrome(s) {\n  // เขียนโค้ดตรงนี้\n}\n",
+                [
+                    {"after": "console.log(isPalindrome(\"abba\"));", "expected": "true"},
+                    {"after": "console.log(isPalindrome(\"abc\"));", "expected": "false"},
+                    {"after": "console.log(isPalindrome(\"a\"));", "expected": "true"},
+                ],
+                "คำตอบ: return s === s.split(\"\").reverse().join(\"\"); (เทียบข้อความกับข้อความที่กลับด้านแล้ว)",
+            ),
+        ],
+    },
+    {
+        "slug": "errors",
+        "title": "จัดการข้อผิดพลาด (try / catch)",
+        "minutes": 12,
+        "starter": "try {\n  const data = JSON.parse(\"abc\");\n  console.log(data);\n} catch (error) {\n  console.log(\"อ่าน JSON ไม่ได้\");\n}\n",
+        "content": JS_ERRORS,
+        "exercises": [
+            mcq(
+                "คำสั่งใดใช้ดักจับ error ใน JavaScript",
+                ["except", "catch", "rescue", "handle"],
+                1,
+                "JavaScript ใช้ try ... catch (ส่วน except เป็นของ Python)",
+            ),
+            mcq(
+                "คำสั่งใดใช้ “โยน” error ขึ้นมาเอง",
+                ["raise Error()", "throw new Error()", "error.new()", "return Error"],
+                1,
+                "ใช้ throw new Error(\"ข้อความ\") เพื่อโยน error",
+            ),
+            code(
+                "เขียนฟังก์ชัน `safeParse(text)` ที่แปลงข้อความ JSON เป็นค่าด้วย `JSON.parse` ถ้าแปลงไม่ได้ให้คืน `null` (ระบบจะเรียกฟังก์ชันของคุณให้ ไม่ต้อง console.log เอง)",
+                "function safeParse(text) {\n  // เขียนโค้ดตรงนี้\n}\n",
+                [
+                    {"after": "console.log(safeParse('{\"a\": 1}').a);", "expected": "1"},
+                    {"after": "console.log(safeParse(\"oops\"));", "expected": "null"},
+                    {"after": "console.log(safeParse(\"\"));", "expected": "null"},
+                ],
+                "คำตอบ: try { return JSON.parse(text); } catch (error) { return null; }",
+            ),
+        ],
+    },
+]
+
 COURSES = [
     {
         "language": "python",

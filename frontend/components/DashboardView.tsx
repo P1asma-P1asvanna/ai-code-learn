@@ -5,6 +5,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
 import { ApiError } from "@/lib/api";
+import { computeBadges } from "@/lib/badges";
 import { fetchDashboard, type DashboardData, type LessonStatus } from "@/lib/learn";
 
 const STATUS_LABEL: Record<LessonStatus, string> = {
@@ -75,6 +76,8 @@ export default function DashboardView() {
 
   const scorePercent = percent(data.total_score, data.max_score);
   const allDone = data.lessons_total > 0 && data.lessons_completed === data.lessons_total;
+  const badges = computeBadges(data);
+  const earnedCount = badges.filter((b) => b.earned).length;
 
   return (
     <div className="stack dashboard">
@@ -125,6 +128,27 @@ export default function DashboardView() {
         ) : (
           <p className="muted">ยังไม่มีบทเรียน</p>
         )}
+      </section>
+
+      <section className="panel" aria-label="ป้ายความสำเร็จ">
+        <h2>
+          ป้ายความสำเร็จ{" "}
+          <span className="small muted">
+            ({earnedCount}/{badges.length})
+          </span>
+        </h2>
+        <ul className="badges">
+          {badges.map((badge) => (
+            <li key={badge.id} className={`badge-card${badge.earned ? " earned" : ""}`}>
+              <span className="badge-icon" aria-hidden>
+                {badge.earned ? badge.icon : "🔒"}
+              </span>
+              <strong>{badge.title}</strong>
+              <span className="small muted">{badge.hint}</span>
+              <span className="sr-only">{badge.earned ? "ได้รับแล้ว" : "ยังไม่ได้รับ"}</span>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="panel" aria-label="ความคืบหน้าแยกตามคอร์ส">

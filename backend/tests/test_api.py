@@ -121,9 +121,9 @@ class ApiTests(unittest.TestCase):
 
     def test_course_list_and_detail(self):
         courses = {c["slug"]: c for c in self.client.get("/api/v1/content/courses").json()}
-        self.assertEqual(courses["python-basics"]["lesson_count"], 7)
+        self.assertEqual(courses["python-basics"]["lesson_count"], 9)
         self.assertEqual(courses["python-basics"]["language"]["name"], "Python")
-        self.assertEqual(courses["javascript-basics"]["lesson_count"], 7)
+        self.assertEqual(courses["javascript-basics"]["lesson_count"], 9)
 
         detail = self.client.get("/api/v1/content/courses/python-basics").json()
         self.assertEqual([x["slug"] for x in detail["lessons"]][:2], ["hello-world", "variables"])
@@ -292,10 +292,10 @@ class ApiTests(unittest.TestCase):
 
         sync_content()
         stats = sync_content()
-        self.assertEqual(stats["lessons"], 14)
+        self.assertEqual(stats["lessons"], 18)
 
         courses = {c["slug"]: c for c in self.client.get("/api/v1/content/courses").json()}
-        self.assertEqual(courses["python-basics"]["lesson_count"], 7)
+        self.assertEqual(courses["python-basics"]["lesson_count"], 9)
         exercises = self.lesson_page("python-basics", "hello-world").json()["exercises"]
         self.assertEqual(len(exercises), 3)
         self.assertNotEqual(exercises[1]["prompt"], "old prompt")

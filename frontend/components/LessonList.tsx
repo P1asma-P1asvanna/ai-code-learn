@@ -51,6 +51,16 @@ export default function LessonList({ course }: { course: CourseDetail }) {
         </p>
       ) : null}
 
+      {progress && course.lessons.length > 0 && completedCount === course.lessons.length ? (
+        <div className="panel course-complete" role="status">
+          <strong>🎓 จบคอร์ส “{course.title}” แล้ว!</strong>
+          <span className="small">
+            เรียนครบ {course.lessons.length} บท · คะแนนรวม {totalScore} ลองเอาความรู้ไปเขียนโปรแกรมของตัวเองใน{" "}
+            <Link href="/playground">Playground</Link> หรือดูป้ายความสำเร็จที่ <Link href="/dashboard">Dashboard</Link>
+          </span>
+        </div>
+      ) : null}
+
       <ol className="lesson-list">
         {course.lessons.map((lesson, index) => {
           const item = byLesson.get(lesson.id);
