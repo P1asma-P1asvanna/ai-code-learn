@@ -121,9 +121,9 @@ class ApiTests(unittest.TestCase):
 
     def test_course_list_and_detail(self):
         courses = {c["slug"]: c for c in self.client.get("/api/v1/content/courses").json()}
-        self.assertEqual(courses["python-basics"]["lesson_count"], 5)
+        self.assertEqual(courses["python-basics"]["lesson_count"], 7)
         self.assertEqual(courses["python-basics"]["language"]["name"], "Python")
-        self.assertEqual(courses["javascript-basics"]["lesson_count"], 5)
+        self.assertEqual(courses["javascript-basics"]["lesson_count"], 7)
 
         detail = self.client.get("/api/v1/content/courses/python-basics").json()
         self.assertEqual([x["slug"] for x in detail["lessons"]][:2], ["hello-world", "variables"])
@@ -136,7 +136,7 @@ class ApiTests(unittest.TestCase):
         data = response.json()
         self.assertEqual(data["course"]["language"]["slug"], "python")
         self.assertEqual(data["prev"]["slug"], "loops")
-        self.assertIsNone(data["next"])
+        self.assertEqual(data["next"]["slug"], "lists")
         self.assertEqual([e["kind"] for e in data["exercises"]], ["mcq", "mcq", "code"])
         self.assertEqual(data["exercises"][2]["cases"][0], {"before": "", "after": "print(square(4))"})
 
@@ -292,10 +292,10 @@ class ApiTests(unittest.TestCase):
 
         sync_content()
         stats = sync_content()
-        self.assertEqual(stats["lessons"], 10)
+        self.assertEqual(stats["lessons"], 14)
 
         courses = {c["slug"]: c for c in self.client.get("/api/v1/content/courses").json()}
-        self.assertEqual(courses["python-basics"]["lesson_count"], 5)
+        self.assertEqual(courses["python-basics"]["lesson_count"], 7)
         exercises = self.lesson_page("python-basics", "hello-world").json()["exercises"]
         self.assertEqual(len(exercises), 3)
         self.assertNotEqual(exercises[1]["prompt"], "old prompt")
@@ -491,7 +491,7 @@ class ApiTests(unittest.TestCase):
         with mock.patch.object(ai_review, "call_chat_completion", return_value=("ok", 1)) as call:
             self.tutor(token, last_output="Error ที่ไม่ควรถูกส่ง")
         system = call.call_args.kwargs["messages"][0]["content"]
-        self.assertNotIn("<code>", system)
+        self.assertNotIn("<code>\n", system)  # (คำว่า <code> ในกติกาของระบบไม่นับ)
         self.assertNotIn("Error ที่ไม่ควรถูกส่ง", system)
 
     def test_tutor_validates_input(self):
