@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 type Props = {
   /** ชื่อไฟล์สมมติ ใช้แยกโมเดลของแต่ละแท็บ (ไม่ให้ประวัติ undo ปนกัน) */
   path: string;
-  language: "python" | "javascript";
+  language: "python" | "javascript" | "html";
   value: string;
   onChange: (value: string) => void;
   onRun?: () => void;

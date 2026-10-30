@@ -130,6 +130,14 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(detail["lessons"][1]["exercise_count"], 3)
         self.assertEqual(self.client.get("/api/v1/content/courses/nope").status_code, 404)
 
+        # คอร์ส HTML & CSS (ภาษา html ตรวจด้วยหน้าเว็บในเบราว์เซอร์ ไม่ใช่การรันโปรแกรม)
+        self.assertEqual(courses["html-css-basics"]["lesson_count"], 6)
+        self.assertEqual(courses["html-css-basics"]["language"]["slug"], "html")
+        page = self.lesson_page("html-css-basics", "css-basics").json()
+        code_exercise = [e for e in page["exercises"] if e["kind"] == "code"][0]
+        self.assertTrue(code_exercise["cases"][0]["after"].startswith("css|"))
+        self.assertNotIn("expected", code_exercise["cases"][0])
+
     def test_lesson_page_has_neighbours_and_exercises_without_answers(self):
         response = self.lesson_page()
         self.assertEqual(response.status_code, 200)
@@ -292,7 +300,7 @@ class ApiTests(unittest.TestCase):
 
         sync_content()
         stats = sync_content()
-        self.assertEqual(stats["lessons"], 18)
+        self.assertEqual(stats["lessons"], 24)
 
         courses = {c["slug"]: c for c in self.client.get("/api/v1/content/courses").json()}
         self.assertEqual(courses["python-basics"]["lesson_count"], 9)

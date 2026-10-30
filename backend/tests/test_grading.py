@@ -105,6 +105,27 @@ class CourseContentTests(unittest.TestCase):
                     self.assertTrue(case["expected"].strip())
                 self.assertIn("starter_code", exercise)
 
+    def test_html_cases_use_known_commands_and_matching_expected_lines(self):
+        """ภาษา html: after = คำสั่งตรวจ (ดู frontend/lib/htmlcheck.ts) ต้องใช้คำสั่งที่มีอยู่จริง และจำนวนบรรทัด expected ต้องเท่ากับจำนวนคำสั่ง"""
+        arguments = {"has": 1, "count": 1, "text": 1, "attr": 2, "css": 2}
+        found = 0
+        for course, lesson in self.lessons():
+            if course["language"] != "html":
+                continue
+            for exercise in lesson["exercises"]:
+                if exercise["kind"] != "code":
+                    continue
+                for case in exercise["test_cases"]:
+                    commands = [line for line in case["after"].splitlines() if line.strip()]
+                    self.assertTrue(case["before"].strip(), "ต้องมีคำอธิบายข้อกำหนด (before)")
+                    self.assertEqual(len(commands), len(case["expected"].splitlines()))
+                    for command in commands:
+                        name, *rest = command.split("|")
+                        self.assertIn(name, arguments)
+                        self.assertEqual(len(rest), arguments[name], command)
+                    found += 1
+        self.assertGreater(found, 10)
+
     def test_points_are_positive(self):
         for _, lesson in self.lessons():
             for exercise in lesson["exercises"]:

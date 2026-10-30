@@ -5,10 +5,12 @@ import { signIn, useSession } from "next-auth/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import CodeEditor from "@/components/CodeEditor";
+import HtmlPreview from "@/components/HtmlPreview";
 import Markdown, { InlineText } from "@/components/Markdown";
 import TutorChat from "@/components/TutorChat";
 import { ApiError } from "@/lib/api";
 import { buildSource, runCases, type CaseRun } from "@/lib/grader";
+import { runWebCases } from "@/lib/htmlcheck";
 import {
   completeLesson,
   fetchLessonProgress,
@@ -53,7 +55,11 @@ export default function LessonView({ page }: { page: LessonPage }) {
   const { course, lesson, exercises, prev, next } = page;
   const languageSlug = course.language.slug;
   const runnableLanguage: Language | null = isRunnable(languageSlug) ? languageSlug : null;
-  const fileExt = languageSlug === "python" ? "py" : "js";
+  // HTML/CSS ไม่ได้รันเป็นโปรแกรม: แสดงตัวอย่างหน้าเว็บสด และตรวจจากหน้าเว็บที่ render แล้ว
+  const isWeb = languageSlug === "html";
+  const canCode = runnableLanguage !== null || isWeb;
+  const editorLanguage: "python" | "javascript" | "html" | null = isWeb ? "html" : runnableLanguage;
+  const fileExt = languageSlug === "python" ? "py" : isWeb ? "html" : "js";
 
   const { data: session, status: sessionStatus } = useSession();
   const token = session?.accessToken;
@@ -160,7 +166,7 @@ export default function LessonView({ page }: { page: LessonPage }) {
 
   const handleSubmitCode = async (exercise: CodeExercise) => {
     const runner = runnerRef.current;
-    if (!runner || !runnableLanguage || busy) return;
+    if (busy || (!isWeb && (!runner || !runnableLanguage))) return;
     const key = exercise.id;
     const code = tabs[key].code;
 
@@ -179,7 +185,10 @@ export default function LessonView({ page }: { page: LessonPage }) {
 
     let runs: CaseRun[] = [];
     try {
-      runs = await runCases(runner, runnableLanguage, code, exercise.cases, setRunNote);
+      runs =
+        isWeb || !runner || !runnableLanguage
+          ? await runWebCases(code, exercise.cases)
+          : await runCases(runner, runnableLanguage, code, exercise.cases, setRunNote);
     } finally {
       setRunNote("");
     }
@@ -309,7 +318,11 @@ export default function LessonView({ page }: { page: LessonPage }) {
               <span>· อ่านประมาณ {lesson.estimated_minutes} นาที</span>
               {lessonStatus === "completed" ? <span className="ok">· ✓ เรียนจบแล้ว</span> : null}
             </div>
-            <Markdown source={lesson.content_md} runnableLang={runnableLanguage ?? undefined} onTryCode={tryCode} />
+            <Markdown
+              source={lesson.content_md}
+              runnableLang={isWeb ? "html" : (runnableLanguage ?? undefined)}
+              onTryCode={tryCode}
+            />
           </article>
 
           {exercises.length > 0 ? (
@@ -364,8 +377,9 @@ export default function LessonView({ page }: { page: LessonPage }) {
                           onChoose={(id) => setChoices((previous) => ({ ...previous, [exercise.id]: id }))}
                           onSubmit={() => void handleSubmitMcq(exercise)}
                         />
-                      ) : runnableLanguage ? (
+                      ) : canCode ? (
                         <CodeExerciseBlock
+                          web={isWeb}
                           exercise={exercise}
                           feedback={tabs[exercise.id]?.feedback ?? null}
                           running={busy?.tab === exercise.id && busy.mode === "submit"}
@@ -412,7 +426,7 @@ export default function LessonView({ page }: { page: LessonPage }) {
         </div>
 
         <aside id="workspace" className="panel workspace" aria-label="ตัวแก้ไขโค้ด">
-          {runnableLanguage ? (
+          {editorLanguage ? (
             <>
               <div className="tabs" role="tablist">
                 <button
@@ -438,7 +452,7 @@ export default function LessonView({ page }: { page: LessonPage }) {
               </div>
 
               <div className="toolbar">
-                {activeExercise ? (
+                {activeExercise && !isWeb ? (
                   <label className="field">
                     <span className="small muted">รันด้วยตัวอย่าง</span>
                     <select
@@ -455,7 +469,9 @@ export default function LessonView({ page }: { page: LessonPage }) {
                   </label>
                 ) : null}
                 <div className="spacer" />
-                {isBusyHere ? (
+                {isWeb ? (
+                  <span className="small muted">ตัวอย่างผลลัพธ์อัปเดตให้อัตโนมัติ</span>
+                ) : isBusyHere ? (
                   <button className="btn btn-danger" onClick={handleStop}>
                     ■ หยุด
                   </button>
@@ -469,24 +485,26 @@ export default function LessonView({ page }: { page: LessonPage }) {
               <CodeEditor
                 key={activeTab}
                 path={`${activeTab}.${fileExt}`}
-                language={runnableLanguage}
+                language={editorLanguage}
                 value={active.code}
                 onChange={(value) => patchTab(activeTab, { code: value, feedback: null })}
                 onRun={() => void handleRun(activeTab)}
               />
               <p className="small muted hint">
-                กด Ctrl/⌘ + Enter เพื่อรัน · โค้ดทำงานในเบราว์เซอร์ของคุณเอง
+                {isWeb
+                  ? "เขียน HTML และ CSS (ใส่ CSS ในแท็ก <style>) ผลลัพธ์แสดงด้านล่าง · สคริปต์ในหน้าเว็บจะไม่ทำงานเพื่อความปลอดภัย"
+                  : "กด Ctrl/⌘ + Enter เพื่อรัน · โค้ดทำงานในเบราว์เซอร์ของคุณเอง"}
                 {languageSlug === "python" ? " · input() ยังไม่รองรับ" : ""}
               </p>
-              {activeExercise ? (
+              {activeExercise && !isWeb ? (
                 <CaseHint exercise={activeExercise} index={active.caseIndex} />
               ) : null}
 
               <div className="output-head">
-                <h2>ผลลัพธ์</h2>
+                <h2>{isWeb ? "ตัวอย่างผลลัพธ์" : "ผลลัพธ์"}</h2>
                 {runNote ? <span className="small muted">{runNote}</span> : null}
               </div>
-              {outputPane}
+              {isWeb ? <HtmlPreview code={active.code} /> : outputPane}
             </>
           ) : (
             <p className="muted small">ภาษานี้ยังไม่มีตัวรันโค้ดในเบราว์เซอร์ (อ่านบทเรียนได้อย่างเดียว)</p>
@@ -494,7 +512,7 @@ export default function LessonView({ page }: { page: LessonPage }) {
         </aside>
       </div>
 
-      <TutorChat lessonId={lesson.id} code={runnableLanguage ? active.code : null} lastError={activeError} />
+      <TutorChat lessonId={lesson.id} code={canCode ? active.code : null} lastError={activeError} />
     </main>
   );
 }
@@ -584,6 +602,7 @@ function McqBlock({
 }
 
 function CodeExerciseBlock({
+  web,
   exercise,
   feedback,
   running,
@@ -591,6 +610,7 @@ function CodeExerciseBlock({
   onOpen,
   onSubmit,
 }: {
+  web: boolean;
   exercise: CodeExercise;
   feedback: Feedback | null;
   running: boolean;
@@ -601,7 +621,9 @@ function CodeExerciseBlock({
   return (
     <div className="stack">
       <p className="small muted">
-        เขียนโค้ดในตัวแก้ไขด้านขวา (บนมือถืออยู่ด้านล่างของหน้า) ระบบจะรันโค้ดของคุณ {exercise.cases.length} รอบด้วยค่าที่ต่างกัน
+        {web
+          ? `เขียน HTML/CSS ในตัวแก้ไขด้านขวา (บนมือถืออยู่ด้านล่างของหน้า) ระบบจะตรวจหน้าเว็บของคุณ ${exercise.cases.length} ข้อ`
+          : `เขียนโค้ดในตัวแก้ไขด้านขวา (บนมือถืออยู่ด้านล่างของหน้า) ระบบจะรันโค้ดของคุณ ${exercise.cases.length} รอบด้วยค่าที่ต่างกัน`}
       </p>
       <div className="row">
         <button className="btn" onClick={onOpen}>
@@ -611,12 +633,12 @@ function CodeExerciseBlock({
           {running ? "กำลังตรวจ…" : "✓ ส่งตรวจ"}
         </button>
       </div>
-      {feedback ? <CodeFeedback exercise={exercise} feedback={feedback} /> : null}
+      {feedback ? <CodeFeedback web={web} exercise={exercise} feedback={feedback} /> : null}
     </div>
   );
 }
 
-function CodeFeedback({ exercise, feedback }: { exercise: CodeExercise; feedback: Feedback }) {
+function CodeFeedback({ web, exercise, feedback }: { web: boolean; exercise: CodeExercise; feedback: Feedback }) {
   if (feedback.kind === "error") {
     return (
       <div className="result fail" role="status">
@@ -637,15 +659,30 @@ function CodeFeedback({ exercise, feedback }: { exercise: CodeExercise; feedback
           ? result.awarded > 0
             ? `ผ่านทุกตัวอย่าง! ได้ ${result.awarded} คะแนน`
             : "ผ่านทุกตัวอย่าง (เคยได้คะแนนข้อนี้ไปแล้ว)"
-          : "ยังไม่ผ่านทุกตัวอย่าง ลองดูผลด้านล่างแล้วแก้โค้ดได้"}
+          : web
+            ? "ยังไม่ผ่านทุกข้อ ลองดูข้อที่ไม่ผ่านด้านล่างแล้วแก้โค้ดได้"
+            : "ยังไม่ผ่านทุกตัวอย่าง ลองดูผลด้านล่างแล้วแก้โค้ดได้"}
       </strong>
       <ul className="case-results">
         {(result.cases ?? []).map((passed, index) => (
           <li key={index} className={passed ? "ok" : "error-text"}>
             <span>
-              {passed ? "✓" : "✗"} ตัวอย่างที่ {index + 1}
+              {passed ? "✓" : "✗"} {web ? `ข้อกำหนดที่ ${index + 1}` : `ตัวอย่างที่ ${index + 1}`}
+              {web && exercise.cases[index]?.before.trim() ? `: ${exercise.cases[index].before}` : ""}
             </span>
-            {!passed ? (
+            {!passed && web ? (
+              <div className="small">
+                <div>
+                  <span className="muted">ที่พบในหน้าเว็บของคุณ:</span>{" "}
+                  <code>{outputs[index] === "" ? "(ไม่พบ)" : outputs[index].replace(/\n/g, " , ")}</code>
+                </div>
+                <div>
+                  <span className="muted">ที่ต้องการ:</span>{" "}
+                  <code>{(expectedByIndex.get(index) ?? "").replace(/\n/g, " , ")}</code>
+                </div>
+              </div>
+            ) : null}
+            {!passed && !web ? (
               <div className="small">
                 <div>
                   <span className="muted">โค้ดของคุณแสดง:</span> <code>{outputs[index] === "" ? "(ไม่มีผลลัพธ์)" : outputs[index]}</code>
