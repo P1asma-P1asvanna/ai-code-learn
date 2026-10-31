@@ -45,7 +45,7 @@ function sendDrawing(pyodide, id) {
 let sqlReady = false;
 async function installSql(pyodide) {
   if (sqlReady) return;
-  await pyodide.loadPackage("sqlite3");
+  await pyodide.loadPackage("sqlite3", { messageCallback: () => {}, errorCallback: () => {} }); // ไม่ให้ข้อความ "Loading sqlite3" ไปปนในผลลัพธ์
   const response = await fetch("/workers/sqlrun.py");
   if (!response.ok) throw new Error("โหลดตัวรัน SQL ไม่สำเร็จ");
   pyodide.globals.set("_sql_src", await response.text());
