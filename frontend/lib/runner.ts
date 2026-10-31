@@ -1,3 +1,5 @@
+import { sanitizeDrawing, type Drawing } from "@/lib/turtle";
+
 export type Language = "python" | "javascript";
 
 export type OutputLine = { kind: "stdout" | "stderr" | "info"; text: string };
@@ -11,8 +13,9 @@ export type RunResult = {
 
 type WorkerMessage = {
   id: number;
-  type: "started" | "stdout" | "stderr" | "done" | "error";
+  type: "started" | "stdout" | "stderr" | "done" | "error" | "draw";
   text?: string;
+  drawing?: unknown;
 };
 
 const WORKER_URL: Record<Language, string> = {
@@ -51,6 +54,7 @@ export class CodeRunner {
     code: string,
     onLine: (line: OutputLine) => void,
     onStatus: (text: string) => void,
+    onDraw?: (drawing: Drawing) => void,
   ): Promise<RunResult> {
     this.active?.stop(true); // หยุดงานก่อนหน้าแบบเงียบ ๆ (ไม่พิมพ์ข้อความลงผลลัพธ์ใหม่)
 
@@ -134,6 +138,11 @@ export class CodeRunner {
             lineCount += 1;
             onLine({ kind: message.type, text: message.text ?? "" });
             break;
+          case "draw": {
+            const drawing = sanitizeDrawing(message.drawing);
+            if (drawing) onDraw?.(drawing);
+            break;
+          }
           case "done":
             finish("ok", null, false);
             break;

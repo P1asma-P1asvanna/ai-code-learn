@@ -7,6 +7,39 @@ const INDEX_URL = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
 importScripts(`${INDEX_URL}pyodide.js`);
 
 let pyodidePromise = null;
+let turtleReady = false;
+
+/* ติดตั้งโมดูล turtle (วาดภาพ) ลงใน Pyodide — ถ้าโหลดไม่ได้ก็ข้ามไป โค้ด Python ปกติยังรันได้ตามเดิม
+   (import turtle จะขึ้น ModuleNotFoundError แทน) */
+async function installTurtle(pyodide) {
+  if (turtleReady) return;
+  try {
+    const response = await fetch("/workers/turtle.py");
+    if (!response.ok) return;
+    pyodide.globals.set("_turtle_src", await response.text());
+    pyodide.runPython(
+      "import sys, types\n" +
+        "_m = types.ModuleType('turtle')\n" +
+        "exec(_turtle_src, _m.__dict__)\n" +
+        "sys.modules['turtle'] = _m\n" +
+        "del _m, _turtle_src\n",
+    );
+    turtleReady = true;
+  } catch (error) {
+    /* ข้าม */
+  }
+}
+
+/* ดึงภาพที่วาดไว้ (ถ้ามี) ส่งให้หน้าเว็บ */
+function sendDrawing(pyodide, id) {
+  if (!turtleReady) return;
+  try {
+    const json = pyodide.runPython("import sys\n_t = sys.modules.get('turtle')\n_t._take() if _t else None");
+    if (json) self.postMessage({ id, type: "draw", drawing: JSON.parse(json) });
+  } catch (error) {
+    /* ภาพวาดเสียก็ไม่กระทบผลลัพธ์ข้อความ */
+  }
+}
 
 function getPyodide() {
   if (!pyodidePromise) {
@@ -46,6 +79,15 @@ self.onmessage = async (event) => {
     pyodide.setStdout({ batched: (line) => send("stdout", line) });
     pyodide.setStderr({ batched: (line) => send("stderr", line) });
 
+    await installTurtle(pyodide);
+    if (turtleReady) {
+      try {
+        pyodide.runPython("import sys\nsys.modules['turtle']._reset_all()");
+      } catch (error) {
+        /* ข้าม */
+      }
+    }
+
     self.postMessage({ id, type: "started" });
 
     // namespace ใหม่ทุกครั้ง ตัวแปรจากการรันก่อนหน้าจะไม่ค้าง
@@ -55,9 +97,15 @@ self.onmessage = async (event) => {
     } finally {
       namespace.destroy();
     }
+    sendDrawing(pyodide, id);
     self.postMessage({ id, type: "done" });
   } catch (error) {
     const message = error && error.message ? error.message : String(error);
+    try {
+      sendDrawing(await getPyodide(), id);
+    } catch (ignored) {
+      /* ข้าม */
+    }
     send("error", cleanTraceback(message));
   }
 };

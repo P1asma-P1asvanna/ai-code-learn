@@ -1,6 +1,7 @@
 /**
  * ตัวแปลง Markdown แบบเล็ก ๆ สำหรับเนื้อหาบทเรียน (เขียนเองเพื่อไม่ต้องพึ่งแพ็กเกจเพิ่ม)
  * รองรับ: หัวข้อ # ## ###, ย่อหน้า, รายการ - และ 1., ข้อความอ้างอิง >, โค้ดบล็อก ```, `โค้ดในบรรทัด`, **ตัวหนา**
+ * โค้ดบล็อกที่เขียน ```python demo จะเป็น “ตัวอย่างสาธิต” (มีปุ่มดูผลลัพธ์ในบทเรียนเลย)
  * ผลลัพธ์เป็นโครงสร้างข้อมูล (ไม่ใช่ HTML) ให้ React วาดเอง จึงไม่มีทางแทรกสคริปต์จากเนื้อหาได้
  */
 
@@ -12,7 +13,7 @@ export type Block =
   | { type: "ul"; items: string[] }
   | { type: "ol"; items: string[] }
   | { type: "quote"; text: string }
-  | { type: "code"; lang: string; code: string };
+  | { type: "code"; lang: string; code: string; demo: boolean };
 
 const INLINE_PATTERN = /(`[^`\n]+`|\*\*[^*\n]+\*\*)/;
 
@@ -47,7 +48,7 @@ export function parseBlocks(source: string): Block[] {
   while (i < lines.length) {
     const line = lines[i];
 
-    const fence = /^```\s*([\w+#-]*)\s*$/.exec(line);
+    const fence = /^```\s*([\w+#-]*)(?:\s+(demo))?\s*$/.exec(line);
     if (fence) {
       flushParagraph();
       const body: string[] = [];
@@ -57,7 +58,7 @@ export function parseBlocks(source: string): Block[] {
         i += 1;
       }
       i += 1; // ข้ามบรรทัดปิด ``` (ถ้าไม่มี ก็จบที่ท้ายเอกสาร)
-      blocks.push({ type: "code", lang: fence[1].toLowerCase(), code: body.join("\n") });
+      blocks.push({ type: "code", lang: fence[1].toLowerCase(), code: body.join("\n"), demo: fence[2] === "demo" });
       continue;
     }
 

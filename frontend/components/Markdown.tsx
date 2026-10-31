@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 
+import DemoBlock, { type DemoResult } from "@/components/DemoBlock";
 import { parseBlocks, parseInline } from "@/lib/markdown";
 
 /** ข้อความที่มี `โค้ด` และ **ตัวหนา** ปนอยู่ (ใช้กับโจทย์แบบฝึกหัดด้วย) */
@@ -22,9 +23,11 @@ type Props = {
   /** ภาษาของตัวอย่างโค้ดที่ลองรันได้ (เช่น "python") — บล็อกภาษาอื่นจะไม่มีปุ่มลอง */
   runnableLang?: string;
   onTryCode?: (code: string) => void;
+  /** รันตัวอย่างสาธิต (```ภาษา demo) แล้วคืนผลลัพธ์ให้แสดงใต้โค้ดนั้น */
+  onRunDemo?: (code: string) => Promise<DemoResult>;
 };
 
-export default function Markdown({ source, runnableLang, onTryCode }: Props) {
+export default function Markdown({ source, runnableLang, onTryCode, onRunDemo }: Props) {
   const blocks = parseBlocks(source);
 
   return (
@@ -72,6 +75,18 @@ export default function Markdown({ source, runnableLang, onTryCode }: Props) {
               </blockquote>
             );
           case "code": {
+            if (block.demo) {
+              return (
+                <DemoBlock
+                  key={index}
+                  code={block.code}
+                  lang={block.lang}
+                  runnableLang={runnableLang}
+                  onRun={onRunDemo}
+                  onTry={onTryCode}
+                />
+              );
+            }
             const canTry = Boolean(onTryCode) && block.lang !== "" && block.lang === runnableLang;
             return (
               <div key={index} className="md-code">

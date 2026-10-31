@@ -12,7 +12,9 @@ import {
   type ReviewResult,
 } from "@/lib/ai";
 import { ApiError, wakeBackend } from "@/lib/api";
+import TurtleCanvas from "@/components/TurtleCanvas";
 import { CodeRunner, type Language, type OutputLine, type RunResult } from "@/lib/runner";
+import type { Drawing } from "@/lib/turtle";
 
 type EditorInstance = Parameters<OnMount>[0];
 type MonacoInstance = Parameters<OnMount>[1];
@@ -42,6 +44,7 @@ export default function Playground() {
   const [language, setLanguage] = useState<Language>("python");
   const [code, setCode] = useState(STARTERS.python);
   const [output, setOutput] = useState<OutputLine[]>([]);
+  const [drawing, setDrawing] = useState<Drawing | null>(null);
   const [running, setRunning] = useState(false);
   const [runNote, setRunNote] = useState("");
   const [lastRun, setLastRun] = useState<RunResult | null>(null);
@@ -160,6 +163,7 @@ export default function Playground() {
     setLanguage(next);
     setCode(STARTERS[next]);
     setOutput([]);
+    setDrawing(null);
     setLastRun(null);
     setReview(null);
     setReviewError(null);
@@ -173,6 +177,7 @@ export default function Playground() {
     if (!runner || running) return;
 
     setOutput([]);
+    setDrawing(null);
     setRunNote("");
     setLastRun(null);
     setRunning(true);
@@ -181,6 +186,7 @@ export default function Playground() {
       code,
       (line) => setOutput((previous) => [...previous, line]),
       setRunNote,
+      setDrawing,
     );
     setRunning(false);
     setRunNote("");
@@ -326,7 +332,11 @@ export default function Playground() {
         </div>
         <pre className="output" aria-live="polite">
           {output.length === 0 ? (
-            <span className="muted">กด “รันโค้ด” เพื่อดูผลลัพธ์ที่นี่</span>
+            drawing ? (
+              <span className="muted">โค้ดนี้วาดภาพ ดูภาพด้านล่าง</span>
+            ) : (
+              <span className="muted">กด “รันโค้ด” เพื่อดูผลลัพธ์ที่นี่</span>
+            )
           ) : (
             output.map((line, index) => (
               <div key={index} className={`line ${line.kind}`}>
@@ -335,6 +345,7 @@ export default function Playground() {
             ))
           )}
         </pre>
+        {drawing ? <TurtleCanvas drawing={drawing} /> : null}
       </section>
 
       <aside className="panel ai-panel" aria-label="AI ช่วยตรวจโค้ด" aria-live="polite">

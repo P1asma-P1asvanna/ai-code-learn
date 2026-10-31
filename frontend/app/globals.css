@@ -1123,6 +1123,45 @@ a.card-link:hover {
   background: #ffffff; /* หน้าเว็บของผู้เรียนมักไม่ได้กำหนดพื้นหลัง จึงใช้สีขาวแบบเบราว์เซอร์ทั่วไป */
 }
 
+/* ---------- ตัวอย่างสาธิต / ภาพที่วาดด้วยโค้ด ---------- */
+
+.demo-block {
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.demo-label {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.demo-result {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.turtle-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.turtle-canvas {
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

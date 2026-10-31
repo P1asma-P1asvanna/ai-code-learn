@@ -5,6 +5,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import CodeEditor from "@/components/CodeEditor";
+import type { DemoResult } from "@/components/DemoBlock";
 import HtmlPreview from "@/components/HtmlPreview";
 import Markdown, { InlineText } from "@/components/Markdown";
 import TutorChat from "@/components/TutorChat";
@@ -23,6 +24,8 @@ import {
   type SubmitResult,
 } from "@/lib/learn";
 import { CodeRunner, type Language, type OutputLine } from "@/lib/runner";
+import type { Drawing } from "@/lib/turtle";
+import TurtleCanvas from "@/components/TurtleCanvas";
 
 const FREE_TAB = "free";
 
@@ -33,6 +36,7 @@ type Feedback =
 type TabState = {
   code: string;
   output: OutputLine[];
+  drawing: Drawing | null;
   caseIndex: number;
   feedback: Feedback | null;
 };
@@ -68,10 +72,10 @@ export default function LessonView({ page }: { page: LessonPage }) {
 
   const [tabs, setTabs] = useState<Record<string, TabState>>(() => {
     const initial: Record<string, TabState> = {
-      [FREE_TAB]: { code: lesson.starter_code ?? "", output: [], caseIndex: 0, feedback: null },
+      [FREE_TAB]: { code: lesson.starter_code ?? "", output: [], drawing: null, caseIndex: 0, feedback: null },
     };
     for (const exercise of codeExercises) {
-      initial[exercise.id] = { code: exercise.starter_code, output: [], caseIndex: 0, feedback: null };
+      initial[exercise.id] = { code: exercise.starter_code, output: [], drawing: null, caseIndex: 0, feedback: null };
     }
     return initial;
   });
@@ -153,14 +157,36 @@ export default function LessonView({ page }: { page: LessonPage }) {
     const exercise = codeExercises.find((e) => e.id === key);
     const source = exercise ? buildSource(tab.code, exercise.cases[tab.caseIndex] ?? { before: "", after: "" }) : tab.code;
 
-    patchTab(key, { output: [], feedback: null });
+    patchTab(key, { output: [], drawing: null, feedback: null });
     setBusy({ tab: key, mode: "run" });
-    await runner.run(runnableLanguage, source, (line) => appendLine(key, line), setRunNote);
+    await runner.run(
+      runnableLanguage,
+      source,
+      (line) => appendLine(key, line),
+      setRunNote,
+      (drawing) => patchTab(key, { drawing }),
+    );
     setBusy(null);
     setRunNote("");
   };
 
   const handleStop = () => runnerRef.current?.stop();
+
+  // ตัวอย่างสาธิตในเนื้อหาบทเรียน (```ภาษา demo): รันแล้วคืนผลให้แสดงใต้โค้ดนั้น ไม่ยุ่งกับตัวแก้ไข
+  const runDemo = async (code: string): Promise<DemoResult> => {
+    const runner = runnerRef.current;
+    if (!runner || !runnableLanguage) return { lines: [], drawing: null };
+    if (busy) {
+      return { lines: [{ kind: "info", text: "กำลังตรวจหรือรันโค้ดอื่นอยู่ รอให้เสร็จแล้วกดอีกครั้ง" }], drawing: null };
+    }
+    const lines: OutputLine[] = [];
+    let drawing: Drawing | null = null;
+    await runner.run(runnableLanguage, code, (line) => lines.push(line), setRunNote, (next) => {
+      drawing = next;
+    });
+    setRunNote("");
+    return { lines, drawing };
+  };
 
   // ---------------------------------------------------------------- ส่งตรวจโค้ด
 
@@ -267,7 +293,7 @@ export default function LessonView({ page }: { page: LessonPage }) {
 
   const tryCode = (code: string) => {
     setActiveTab(FREE_TAB);
-    patchTab(FREE_TAB, { code, output: [] });
+    patchTab(FREE_TAB, { code, output: [], drawing: null });
     document.getElementById("workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -291,7 +317,9 @@ export default function LessonView({ page }: { page: LessonPage }) {
   const outputPane = (
     <pre className="output" aria-live="polite">
       {active.output.length === 0 ? (
-        <span className="muted">กด “รันโค้ด” เพื่อดูผลลัพธ์ที่นี่</span>
+        <span className="muted">
+          {active.drawing ? "โค้ดนี้วาดภาพ ดูภาพด้านล่าง" : "กด “รันโค้ด” เพื่อดูผลลัพธ์ที่นี่"}
+        </span>
       ) : (
         active.output.map((line, index) => (
           <div key={index} className={`line ${line.kind}`}>
@@ -322,6 +350,7 @@ export default function LessonView({ page }: { page: LessonPage }) {
               source={lesson.content_md}
               runnableLang={isWeb ? "html" : (runnableLanguage ?? undefined)}
               onTryCode={tryCode}
+              onRunDemo={runDemo}
             />
           </article>
 
@@ -505,6 +534,7 @@ export default function LessonView({ page }: { page: LessonPage }) {
                 {runNote ? <span className="small muted">{runNote}</span> : null}
               </div>
               {isWeb ? <HtmlPreview code={active.code} /> : outputPane}
+              {!isWeb && active.drawing ? <TurtleCanvas drawing={active.drawing} /> : null}
             </>
           ) : (
             <p className="muted small">ภาษานี้ยังไม่มีตัวรันโค้ดในเบราว์เซอร์ (อ่านบทเรียนได้อย่างเดียว)</p>
