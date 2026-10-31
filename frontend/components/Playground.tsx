@@ -13,17 +13,23 @@ import {
 } from "@/lib/ai";
 import { ApiError, wakeBackend } from "@/lib/api";
 import TurtleCanvas from "@/components/TurtleCanvas";
-import { CodeRunner, type Language, type OutputLine, type RunResult } from "@/lib/coderunner";
+import HtmlPreview from "@/components/HtmlPreview";
+import { CodeRunner, type OutputLine, type RunnerLanguage, type RunResult } from "@/lib/coderunner";
 import type { Drawing } from "@/lib/turtle";
 
 type EditorInstance = Parameters<OnMount>[0];
 type MonacoInstance = Parameters<OnMount>[1];
 
+// HTML & CSS ไม่ได้รันเป็นโปรแกรม แต่แสดงหน้าเว็บสดแทน
+type Language = RunnerLanguage | "html";
+
 const STARTERS: Record<Language, string> = {
   python: 'name = "โลก"\nprint(f"สวัสดี {name}!")\n',
   javascript: 'const name = "โลก";\nconsole.log(`สวัสดี ${name}!`);\n',
+  sql: "SELECT name, kind, age FROM pets\nWHERE age > 2\nORDER BY age DESC;\n-- ตารางที่มีให้ลอง: pets, snacks\n",
+  html: '<style>\n  h1 { color: royalblue; }\n</style>\n\n<h1>สวัสดีชาวโลก</h1>\n<p>แก้ HTML และ CSS ตรงนี้ ผลลัพธ์ขึ้นทันที</p>\n',
 };
-const FILE_NAMES: Record<Language, string> = { python: "main.py", javascript: "main.js" };
+const FILE_NAMES: Record<Language, string> = { python: "main.py", javascript: "main.js", sql: "main.sql", html: "index.html" };
 
 // รอให้ผู้เรียนหยุดพิมพ์กี่มิลลิวินาทีก่อนให้ AI ตรวจอัตโนมัติ
 const AUTO_DELAY_MS = 2500;
@@ -174,7 +180,7 @@ export default function Playground() {
 
   const handleRun = useCallback(async () => {
     const runner = runnerRef.current;
-    if (!runner || running) return;
+    if (!runner || running || language === "html") return;
 
     setOutput([]);
     setDrawing(null);
@@ -285,10 +291,12 @@ export default function Playground() {
             >
               <option value="python">Python</option>
               <option value="javascript">JavaScript</option>
+              <option value="sql">SQL</option>
+              <option value="html">HTML &amp; CSS</option>
             </select>
           </label>
           <div className="spacer" />
-          {running ? (
+          {language === "html" ? null : running ? (
             <button className="btn btn-danger" onClick={() => runnerRef.current?.stop()}>
               ■ หยุด
             </button>
@@ -311,7 +319,7 @@ export default function Playground() {
             options={{
               minimap: { enabled: false },
               fontSize: 14,
-              tabSize: 4,
+              tabSize: language === "python" || language === "sql" ? 4 : 2,
               wordWrap: "on",
               scrollBeyondLastLine: false,
               automaticLayout: true,
@@ -319,18 +327,22 @@ export default function Playground() {
           />
         </div>
         <p className="small muted hint">
-          กด Ctrl/⌘ + Enter เพื่อรัน · โค้ดทำงานในเบราว์เซอร์ของคุณเอง ไม่ถูกส่งไปที่เซิร์ฟเวอร์
+          {language === "html"
+            ? "ผลลัพธ์แสดงสดด้านล่างขณะพิมพ์ · สคริปต์ในหน้าเว็บจะไม่ทำงานเพื่อความปลอดภัย"
+            : "กด Ctrl/⌘ + Enter เพื่อรัน · โค้ดทำงานในเบราว์เซอร์ของคุณเอง ไม่ถูกส่งไปที่เซิร์ฟเวอร์"}
           {language === "python" ? " · input() ยังไม่รองรับ" : ""}
+          {language === "sql" ? " · มีตาราง pets และ snacks ให้ลอง (สร้างใหม่ทุกครั้งที่รัน)" : ""}
         </p>
 
         <div className="output-head">
-          <h2>ผลลัพธ์</h2>
+          <h2>{language === "html" ? "ตัวอย่างผลลัพธ์" : "ผลลัพธ์"}</h2>
           {runNote ? <span className="small muted">{runNote}</span> : null}
           {lastRun?.status === "ok" ? (
             <span className="small ok">เสร็จสิ้นใน {lastRun.durationMs} ms</span>
           ) : null}
         </div>
-        <pre className="output" aria-live="polite">
+        {language === "html" ? <HtmlPreview code={code} /> : null}
+        <pre className="output" aria-live="polite" style={language === "html" ? { display: "none" } : undefined}>
           {output.length === 0 ? (
             drawing ? (
               <span className="muted">โค้ดนี้วาดภาพ ดูภาพด้านล่าง</span>
