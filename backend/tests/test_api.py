@@ -64,7 +64,7 @@ class ApiTests(unittest.TestCase):
 
     def test_seeded_languages_and_lessons(self):
         languages = {row["slug"] for row in self.client.get("/api/v1/content/languages").json()}
-        self.assertTrue({"python", "javascript"} <= languages)
+        self.assertTrue({"python", "javascript", "html", "sql"} <= languages)
 
         lessons = self.client.get("/api/v1/content/courses/python-basics/lessons").json()
         self.assertGreaterEqual(len(lessons), 1)
@@ -121,9 +121,9 @@ class ApiTests(unittest.TestCase):
 
     def test_course_list_and_detail(self):
         courses = {c["slug"]: c for c in self.client.get("/api/v1/content/courses").json()}
-        self.assertEqual(courses["python-basics"]["lesson_count"], 9)
+        self.assertEqual(courses["python-basics"]["lesson_count"], 10)
         self.assertEqual(courses["python-basics"]["language"]["name"], "Python")
-        self.assertEqual(courses["javascript-basics"]["lesson_count"], 9)
+        self.assertEqual(courses["javascript-basics"]["lesson_count"], 10)
 
         detail = self.client.get("/api/v1/content/courses/python-basics").json()
         self.assertEqual([x["slug"] for x in detail["lessons"]][:2], ["hello-world", "variables"])
@@ -131,7 +131,9 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.client.get("/api/v1/content/courses/nope").status_code, 404)
 
         # คอร์ส HTML & CSS (ภาษา html ตรวจด้วยหน้าเว็บในเบราว์เซอร์ ไม่ใช่การรันโปรแกรม)
-        self.assertEqual(courses["html-css-basics"]["lesson_count"], 6)
+        self.assertEqual(courses["html-css-basics"]["lesson_count"], 7)
+        self.assertEqual(courses["sql-basics"]["lesson_count"], 5)
+        self.assertEqual(courses["sql-basics"]["language"]["slug"], "sql")
         self.assertEqual(courses["html-css-basics"]["language"]["slug"], "html")
         page = self.lesson_page("html-css-basics", "css-basics").json()
         code_exercise = [e for e in page["exercises"] if e["kind"] == "code"][0]
@@ -300,10 +302,10 @@ class ApiTests(unittest.TestCase):
 
         sync_content()
         stats = sync_content()
-        self.assertEqual(stats["lessons"], 24)
+        self.assertEqual(stats["lessons"], 32)
 
         courses = {c["slug"]: c for c in self.client.get("/api/v1/content/courses").json()}
-        self.assertEqual(courses["python-basics"]["lesson_count"], 9)
+        self.assertEqual(courses["python-basics"]["lesson_count"], 10)
         exercises = self.lesson_page("python-basics", "hello-world").json()["exercises"]
         self.assertEqual(len(exercises), 3)
         self.assertNotEqual(exercises[1]["prompt"], "old prompt")

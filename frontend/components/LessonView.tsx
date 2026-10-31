@@ -23,7 +23,7 @@ import {
   type McqExercise,
   type SubmitResult,
 } from "@/lib/learn";
-import { CodeRunner, type Language, type OutputLine } from "@/lib/coderunner";
+import { CodeRunner, type OutputLine, type RunnerLanguage } from "@/lib/coderunner";
 import type { Drawing } from "@/lib/turtle";
 import TurtleCanvas from "@/components/TurtleCanvas";
 
@@ -43,8 +43,8 @@ type TabState = {
 
 type Busy = null | { tab: string; mode: "run" | "submit" };
 
-function isRunnable(slug: string): slug is Language {
-  return slug === "python" || slug === "javascript";
+function isRunnable(slug: string): slug is RunnerLanguage {
+  return slug === "python" || slug === "javascript" || slug === "sql";
 }
 
 function errorMessage(error: unknown): string {
@@ -58,12 +58,12 @@ function errorMessage(error: unknown): string {
 export default function LessonView({ page }: { page: LessonPage }) {
   const { course, lesson, exercises, prev, next } = page;
   const languageSlug = course.language.slug;
-  const runnableLanguage: Language | null = isRunnable(languageSlug) ? languageSlug : null;
+  const runnableLanguage: RunnerLanguage | null = isRunnable(languageSlug) ? languageSlug : null;
   // HTML/CSS ไม่ได้รันเป็นโปรแกรม: แสดงตัวอย่างหน้าเว็บสด และตรวจจากหน้าเว็บที่ render แล้ว
   const isWeb = languageSlug === "html";
   const canCode = runnableLanguage !== null || isWeb;
-  const editorLanguage: "python" | "javascript" | "html" | null = isWeb ? "html" : runnableLanguage;
-  const fileExt = languageSlug === "python" ? "py" : isWeb ? "html" : "js";
+  const editorLanguage: "python" | "javascript" | "html" | "sql" | null = isWeb ? "html" : runnableLanguage;
+  const fileExt = languageSlug === "python" ? "py" : languageSlug === "sql" ? "sql" : isWeb ? "html" : "js";
 
   const { data: session, status: sessionStatus } = useSession();
   const token = session?.accessToken;

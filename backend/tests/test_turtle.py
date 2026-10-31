@@ -137,6 +137,17 @@ class TurtleTests(unittest.TestCase):
         drawing = take(self.t)
         self.assertTrue(math.isfinite(drawing["commands"][0]["x2"]))
 
+    def test_grading_helpers_count_lines_and_length(self):
+        self.t.penup()
+        self.t.forward(10)  # ยกปากกา: ไม่นับ
+        self.t.pendown()
+        for _ in range(4):
+            self.t.forward(50)
+            self.t.left(90)
+        self.assertEqual(self.t.lines_drawn(), 4)
+        self.assertEqual(round(self.t.path_length()), 200)
+        self.assertIn("lines_drawn", self.t.__all__)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,8 @@
 import { sanitizeDrawing, type Drawing } from "@/lib/turtle";
 
 export type Language = "python" | "javascript";
+/** ภาษาที่ตัวรันรองรับ (SQL รันผ่าน worker ของ Python) */
+export type RunnerLanguage = Language | "sql";
 
 export type OutputLine = { kind: "stdout" | "stderr" | "info"; text: string };
 
@@ -18,8 +20,9 @@ type WorkerMessage = {
   drawing?: unknown;
 };
 
-const WORKER_URL: Record<Language, string> = {
+const WORKER_URL: Record<RunnerLanguage, string> = {
   python: "/workers/python-worker.js",
+  sql: "/workers/python-worker.js",
   javascript: "/workers/js-worker.js",
 };
 
@@ -50,7 +53,7 @@ export class CodeRunner {
   }
 
   run(
-    language: Language,
+    language: RunnerLanguage,
     code: string,
     onLine: (line: OutputLine) => void,
     onStatus: (text: string) => void,
@@ -59,7 +62,7 @@ export class CodeRunner {
     this.active?.stop(true); // หยุดงานก่อนหน้าแบบเงียบ ๆ (ไม่พิมพ์ข้อความลงผลลัพธ์ใหม่)
 
     const id = this.nextId++;
-    const isPython = language === "python";
+    const isPython = language === "python" || language === "sql";
 
     if (isPython && !this.pythonWorker) {
       this.pythonWorker = new Worker(WORKER_URL.python);
@@ -68,7 +71,7 @@ export class CodeRunner {
     const worker = isPython ? (this.pythonWorker as Worker) : new Worker(WORKER_URL[language]);
 
     if (isPython && !this.pythonReady) {
-      onStatus("กำลังโหลด Python ครั้งแรก อาจใช้เวลาสักครู่…");
+      onStatus(language === "sql" ? "กำลังโหลดตัวรัน SQL ครั้งแรก อาจใช้เวลาสักครู่…" : "กำลังโหลด Python ครั้งแรก อาจใช้เวลาสักครู่…");
     }
 
     return new Promise<RunResult>((resolve) => {
@@ -172,7 +175,7 @@ export class CodeRunner {
         finish("timeout", null, true);
       }, LOAD_TIMEOUT_MS);
 
-      worker.postMessage({ id, code });
+      worker.postMessage({ id, code, language });
     });
   }
 }

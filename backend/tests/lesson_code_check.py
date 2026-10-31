@@ -19,6 +19,7 @@ import sys
 import tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+SQLRUN_PY = ROOT / "frontend" / "public" / "workers" / "sqlrun.py"
 TURTLE_PY = ROOT / "frontend" / "public" / "workers" / "turtle.py"
 JS_WORKER = ROOT / "frontend" / "public" / "workers" / "js-worker.js"
 ERROR_MARK = "ตัวอย่างนี้ error"
@@ -69,6 +70,16 @@ const out = (...a) => console.log(a.map((x) => (typeof x === "string" ? x : JSON
 '''
 
 
+def run_sql_text(code: str, emit):
+    """รัน SQL ด้วย sqlrun.py ตัวเดียวกับที่เว็บใช้ (sqlite3 ของ Python ปกติ) คืนข้อความ error หรือ None"""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("sqlrun_under_test", SQLRUN_PY)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.run_sql(code, emit)
+
+
 def blocks(markdown: str):
     for match in FENCE.finditer(markdown):
         yield match.group(1).lower(), match.group(2) == "demo", match.group(3)
@@ -104,6 +115,15 @@ def check_text(key: str, markdown: str, *, have_node: bool | None = None) -> lis
         for index, (lang, demo, code) in enumerate(blocks(markdown), start=1):
             if demo:
                 demos += 1
+            if lang == "sql":
+                label = f"{key} บล็อกที่ {index} (sql{' demo' if demo else ''})"
+                out: list[str] = []
+                error = run_sql_text(code, out.append)
+                if error:
+                    problems.append(f"{label}: รันไม่ผ่าน → {error[:300]}")
+                elif demo and not out:
+                    problems.append(f"{label}: เป็นตัวอย่างสาธิตแต่ไม่มีผลลัพธ์ให้ดูเลย")
+                continue
             if lang not in ("python", "javascript"):
                 continue
             if lang == "javascript" and not have_node:
@@ -117,7 +137,7 @@ def check_text(key: str, markdown: str, *, have_node: bool | None = None) -> lis
                 problems.append(f"{label}: รันไม่ผ่าน → {stderr.strip()[-300:]}")
             if demo and not expect_error and status == 0 and not stdout.strip() and not drawn:
                 problems.append(f"{label}: เป็นตัวอย่างสาธิตแต่ไม่มีผลลัพธ์ให้ดูเลย")
-    if demos == 0 and re.search(r"```\s*(python|javascript)", markdown):
+    if demos == 0 and re.search(r"```\s*(python|javascript|sql)", markdown):
         problems.append(f"{key}: ยังไม่มีตัวอย่างสาธิต (```ภาษา demo) เลย")
     return problems
 

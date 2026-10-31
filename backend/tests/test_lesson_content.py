@@ -20,6 +20,26 @@ class LessonContentTests(unittest.TestCase):
                     problems.append(f"{key}: ไม่มีตัวอย่างสาธิตเลย")
         self.assertEqual(problems, [])
 
+    def test_sql_exercise_reference_answers_pass_and_starters_fail(self):
+        for course in course_content.COURSES:
+            if course["language"] != "sql":
+                continue
+            for lesson in course["lessons"]:
+                for exercise in lesson["exercises"]:
+                    if exercise["kind"] != "code":
+                        continue
+                    self.assertTrue(exercise["explanation"].startswith("คำตอบ: "), lesson["slug"])
+                    solution = exercise["explanation"][len("คำตอบ: "):]
+                    for case in exercise["test_cases"]:
+                        def output(code):
+                            lines: list[str] = []
+                            error = check.run_sql_text(code + "\n" + case["after"], lines.append)
+                            self.assertIsNone(error, lesson["slug"])
+                            return "\n".join(lines)
+
+                        self.assertEqual(output(solution), case["expected"], lesson["slug"])
+                        self.assertNotEqual(output(exercise["starter_code"]), case["expected"], lesson["slug"])
+
 
 if __name__ == "__main__":
     unittest.main()

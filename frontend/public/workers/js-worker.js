@@ -184,6 +184,12 @@ function createTurtleApi() {
     background: (c) => {
       state.bg = colorText(c);
     },
+    // (เฉพาะเว็บนี้) ใช้อ่านค่าและตรวจแบบฝึกหัดวาดภาพ
+    x: () => main.x,
+    y: () => main.y,
+    lineCount: () => commands.filter((c) => c.t === "line").length,
+    pathLength: () =>
+      commands.filter((c) => c.t === "line").reduce((sum, c) => sum + Math.hypot(c.x2 - c.x1, c.y2 - c.y1), 0),
   };
 
   /** คืนภาพที่วาด (หรือ null ถ้าไม่มีอะไรให้วาด) */

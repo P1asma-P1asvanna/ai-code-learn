@@ -53,6 +53,7 @@ LANGUAGES = [
     {"slug": "python", "name": "Python", "runtime": "pyodide", "sort_order": 1},
     {"slug": "javascript", "name": "JavaScript", "runtime": "js", "sort_order": 2},
     {"slug": "html", "name": "HTML & CSS", "runtime": "html", "sort_order": 3},
+    {"slug": "sql", "name": "SQL", "runtime": "sql", "sort_order": 4},
 ]
 
 # ======================================================================== Python
@@ -2110,6 +2111,281 @@ JS_LESSONS += [
     },
 ]
 
+PY_DRAW = r'''# วาดภาพด้วยโค้ด (turtle)
+
+## เต่าถือปากกา
+
+ลองนึกถึงเต่าตัวหนึ่งที่ถือปากกาอยู่บนกระดาษ เราสั่งได้ว่า “เดินหน้า” “เลี้ยวซ้าย” เต่าก็เดินและลากเส้นตามไป เมื่อสั่งต่อกันหลาย ๆ คำสั่ง ก็กลายเป็นภาพ
+
+โมดูล `turtle` ของ Python ทำงานแบบนี้เลย
+
+- `forward(100)` เดินหน้า 100 ก้าว
+- `left(90)` เลี้ยวซ้าย 90 องศา (`right` คือเลี้ยวขวา)
+- `penup()` ยกปากกา (เดินโดยไม่วาด) `pendown()` วางปากกา
+- `color("red")` เปลี่ยนสี
+
+## ตัวอย่าง: บ้านหลังเล็ก
+
+```python demo
+import turtle
+
+# ตัวบ้าน (สี่เหลี่ยม)
+turtle.color("saddlebrown")
+turtle.begin_fill()
+for _ in range(4):
+    turtle.forward(100)
+    turtle.left(90)
+turtle.end_fill()
+
+# หลังคา (สามเหลี่ยม)
+turtle.color("firebrick")
+turtle.begin_fill()
+turtle.left(60)
+turtle.forward(100)
+turtle.right(120)
+turtle.forward(100)
+turtle.end_fill()
+```
+
+`begin_fill()` กับ `end_fill()` ใช้ระบายสีข้างในรูปที่เราวาดไว้ระหว่างสองคำสั่งนี้
+
+## ตัวอย่าง: ต้นไม้
+
+เมื่อจะวาดคนละที่ เราต้อง **ยกปากกา** แล้วไปที่ใหม่ด้วย `goto(x, y)` (กลางภาพคือ 0, 0)
+
+```python demo
+import turtle
+
+turtle.bgcolor("lightcyan")
+
+# ลำต้น
+turtle.penup()
+turtle.goto(0, -80)
+turtle.pendown()
+turtle.color("saddlebrown")
+turtle.pensize(14)
+turtle.setheading(90)
+turtle.forward(70)
+
+# ใบไม้ (วงกลมสีเขียวสามวง)
+turtle.penup()
+for x, y in [(-30, -10), (30, -10), (0, 30)]:
+    turtle.goto(x, y)
+    turtle.dot(70, "forestgreen")
+```
+
+`dot(70, "สี")` วาดจุดกลมขนาด 70 ส่วน `setheading(90)` หันหัวเต่าขึ้นข้างบน
+
+## ตัวอย่าง: ลายก้นหอย
+
+ให้เต่าเดินไกลขึ้นเรื่อย ๆ แล้วเลี้ยว ก็จะได้ลายก้นหอยสวย ๆ จากโค้ดสั้น ๆ
+
+```python demo
+import turtle
+
+turtle.bgcolor("black")
+turtle.color("gold")
+for i in range(60):
+    turtle.forward(i * 3)
+    turtle.left(91)
+```
+
+## ทำเป็นฟังก์ชันใช้ซ้ำได้
+
+ถ้าอยากวาดรูปเดิมหลายครั้ง ให้ห่อเป็น **ฟังก์ชัน** (บทที่ 5) เหมือนเขียนสูตรไว้ แล้วเรียกใช้เมื่อไรก็ได้
+
+```python demo
+import turtle
+
+def square(size):
+    for _ in range(4):
+        turtle.forward(size)
+        turtle.left(90)
+
+for size in [40, 70, 100]:
+    square(size)
+```
+
+> จำไว้: `forward` / `left` / `right` เคลื่อนเต่า, `penup` / `pendown` ยก/วางปากกา, `goto` ไปที่ใหม่, `begin_fill` / `end_fill` ระบายสี และใช้ `for` หรือฟังก์ชันเพื่อไม่ต้องเขียนซ้ำ
+'''
+
+JS_DRAW = r'''# วาดภาพด้วยโค้ด (turtle)
+
+## เต่าถือปากกา
+
+ลองนึกถึงเต่าตัวหนึ่งที่ถือปากกาอยู่บนกระดาษ เราสั่งได้ว่า “เดินหน้า” “เลี้ยวซ้าย” เต่าก็เดินและลากเส้นตามไป เมื่อสั่งต่อกันหลาย ๆ คำสั่ง ก็กลายเป็นภาพ
+
+เว็บนี้เตรียมตัวช่วยชื่อ `turtle` ให้ใช้ได้เลย ไม่ต้องติดตั้ง (นี่เป็นของที่เว็บนี้จัดให้เอง ไม่ใช่ส่วนหนึ่งของ JavaScript ทั่วไป)
+
+- `turtle.forward(100)` เดินหน้า 100 ก้าว
+- `turtle.left(90)` เลี้ยวซ้าย 90 องศา (`right` คือเลี้ยวขวา)
+- `turtle.penUp()` ยกปากกา (เดินโดยไม่วาด) `turtle.penDown()` วางปากกา
+- `turtle.color("red")` เปลี่ยนสี
+
+## ตัวอย่าง: บ้านหลังเล็ก
+
+```javascript demo
+// ตัวบ้าน (สี่เหลี่ยม)
+turtle.color("saddlebrown");
+turtle.beginFill();
+for (let i = 0; i < 4; i++) {
+  turtle.forward(100);
+  turtle.left(90);
+}
+turtle.endFill();
+
+// หลังคา (สามเหลี่ยม)
+turtle.color("firebrick");
+turtle.beginFill();
+turtle.left(60);
+turtle.forward(100);
+turtle.right(120);
+turtle.forward(100);
+turtle.endFill();
+```
+
+`beginFill()` กับ `endFill()` ใช้ระบายสีข้างในรูปที่เราวาดไว้ระหว่างสองคำสั่งนี้
+
+## ตัวอย่าง: ต้นไม้
+
+เมื่อจะวาดคนละที่ เราต้อง **ยกปากกา** แล้วไปที่ใหม่ด้วย `goto(x, y)` (กลางภาพคือ 0, 0)
+
+```javascript demo
+turtle.background("lightcyan");
+
+// ลำต้น
+turtle.penUp();
+turtle.goto(0, -80);
+turtle.penDown();
+turtle.color("saddlebrown");
+turtle.size(14);
+turtle.setHeading(90);
+turtle.forward(70);
+
+// ใบไม้ (วงกลมสีเขียวสามวง)
+turtle.penUp();
+for (const [x, y] of [[-30, -10], [30, -10], [0, 30]]) {
+  turtle.goto(x, y);
+  turtle.dot(70, "forestgreen");
+}
+```
+
+`dot(70, "สี")` วาดจุดกลมขนาด 70 ส่วน `setHeading(90)` หันหัวเต่าขึ้นข้างบน
+
+## ตัวอย่าง: ลายก้นหอย
+
+ให้เต่าเดินไกลขึ้นเรื่อย ๆ แล้วเลี้ยว ก็จะได้ลายก้นหอยสวย ๆ จากโค้ดสั้น ๆ
+
+```javascript demo
+turtle.background("black");
+turtle.color("gold");
+for (let i = 0; i < 60; i++) {
+  turtle.forward(i * 3);
+  turtle.left(91);
+}
+```
+
+## ทำเป็นฟังก์ชันใช้ซ้ำได้
+
+ถ้าอยากวาดรูปเดิมหลายครั้ง ให้ห่อเป็น **ฟังก์ชัน** (บทที่ 5) เหมือนเขียนสูตรไว้ แล้วเรียกใช้เมื่อไรก็ได้
+
+```javascript demo
+function square(size) {
+  for (let i = 0; i < 4; i++) {
+    turtle.forward(size);
+    turtle.left(90);
+  }
+}
+
+for (const size of [40, 70, 100]) {
+  square(size);
+}
+```
+
+> จำไว้: `forward` / `left` / `right` เคลื่อนเต่า, `penUp` / `penDown` ยก/วางปากกา, `goto` ไปที่ใหม่, `beginFill` / `endFill` ระบายสี และใช้ `for` หรือฟังก์ชันเพื่อไม่ต้องเขียนซ้ำ
+'''
+
+
+PY_LESSONS.append(
+    {
+        "slug": "drawing",
+        "title": "วาดภาพด้วยโค้ด (turtle)",
+        "minutes": 15,
+        "starter": "import turtle\n\nturtle.color(\"royalblue\")\nfor _ in range(4):\n    turtle.forward(100)\n    turtle.left(90)\n",
+        "content": PY_DRAW,
+        "exercises": [
+            mcq(
+                "ถ้าอยากให้เต่าเดินไปที่ใหม่โดยไม่ลากเส้น ควรทำอย่างไร",
+                ["เรียก penup() ก่อน แล้วค่อย goto(...)", "เรียก hide() ก่อน", "เรียก end_fill()", "ใช้ color(\"white\") เท่านั้น"],
+                0,
+                "penup() ยกปากกา เต่าจึงเดินไปที่ใหม่โดยไม่วาด แล้วค่อย pendown() เมื่อจะวาดต่อ",
+            ),
+            mcq(
+                "วาดสี่เหลี่ยมจัตุรัสด้วย for ต้องวนกี่รอบ และเลี้ยวรอบละกี่องศา",
+                ["4 รอบ รอบละ 90 องศา", "3 รอบ รอบละ 60 องศา", "4 รอบ รอบละ 45 องศา", "2 รอบ รอบละ 180 องศา"],
+                0,
+                "สี่เหลี่ยมมี 4 ด้าน และเลี้ยวมุมฉาก 90 องศาทุกด้าน (4 x 90 = 360 หมุนครบรอบพอดี)",
+            ),
+            code(
+                "เขียนฟังก์ชัน `square(size)` ที่ใช้ turtle วาดสี่เหลี่ยมจัตุรัสด้านละ `size` ก้าว (ใช้ `for` และ `turtle.forward` / `turtle.left`) ระบบจะเรียกฟังก์ชันของคุณแล้วนับเส้นที่วาดให้ ไม่ต้อง print เอง",
+                "import turtle\n\ndef square(size):\n    # เขียนโค้ดตรงนี้\n    pass\n",
+                [
+                    {
+                        "before": "import turtle",
+                        "after": "square(50)\nprint(turtle.lines_drawn(), round(turtle.path_length()), round(turtle.xcor()), round(turtle.ycor()))",
+                        "expected": "4 200 0 0",
+                    },
+                    {
+                        "before": "import turtle",
+                        "after": "square(30)\nprint(turtle.lines_drawn(), round(turtle.path_length()), round(turtle.xcor()), round(turtle.ycor()))",
+                        "expected": "4 120 0 0",
+                    },
+                ],
+                "คำตอบ: for _ in range(4): turtle.forward(size); turtle.left(90) (เขียนให้อยู่คนละบรรทัด)",
+            ),
+        ],
+    }
+)
+
+JS_LESSONS.append(
+    {
+        "slug": "drawing",
+        "title": "วาดภาพด้วยโค้ด (turtle)",
+        "minutes": 15,
+        "starter": "turtle.color(\"royalblue\");\nfor (let i = 0; i < 4; i++) {\n  turtle.forward(100);\n  turtle.left(90);\n}\n",
+        "content": JS_DRAW,
+        "exercises": [
+            mcq(
+                "ถ้าอยากให้เต่าเดินไปที่ใหม่โดยไม่ลากเส้น ควรทำอย่างไร",
+                ["เรียก turtle.penUp() ก่อน แล้วค่อย turtle.goto(...)", "เรียก turtle.hide() ก่อน", "เรียก turtle.endFill()", "ใช้ turtle.color(\"white\") เท่านั้น"],
+                0,
+                "penUp() ยกปากกา เต่าจึงเดินไปที่ใหม่โดยไม่วาด แล้วค่อย penDown() เมื่อจะวาดต่อ",
+            ),
+            mcq(
+                "วาดสี่เหลี่ยมจัตุรัสด้วย for ต้องวนกี่รอบ และเลี้ยวรอบละกี่องศา",
+                ["4 รอบ รอบละ 90 องศา", "3 รอบ รอบละ 60 องศา", "4 รอบ รอบละ 45 องศา", "2 รอบ รอบละ 180 องศา"],
+                0,
+                "สี่เหลี่ยมมี 4 ด้าน และเลี้ยวมุมฉาก 90 องศาทุกด้าน (4 x 90 = 360 หมุนครบรอบพอดี)",
+            ),
+            code(
+                "เขียนฟังก์ชัน `square(size)` ที่ใช้ `turtle` วาดสี่เหลี่ยมจัตุรัสด้านละ `size` ก้าว (ใช้ `for` และ `turtle.forward` / `turtle.left`) ระบบจะเรียกฟังก์ชันของคุณแล้วนับเส้นที่วาดให้ ไม่ต้อง console.log เอง",
+                "function square(size) {\n  // เขียนโค้ดตรงนี้\n}\n",
+                [
+                    {
+                        "after": "square(50);\nconsole.log(`${turtle.lineCount()} ${Math.round(turtle.pathLength())} ${Math.round(turtle.x())} ${Math.round(turtle.y())}`);",
+                        "expected": "4 200 0 0",
+                    },
+                    {
+                        "after": "square(30);\nconsole.log(`${turtle.lineCount()} ${Math.round(turtle.pathLength())} ${Math.round(turtle.x())} ${Math.round(turtle.y())}`);",
+                        "expected": "4 120 0 0",
+                    },
+                ],
+                "คำตอบ: for (let i = 0; i < 4; i++) { turtle.forward(size); turtle.left(90); }",
+            ),
+        ],
+    }
+)
+
 # ======================================================================== HTML & CSS
 #
 # แบบฝึกหัดเขียนโค้ดของภาษา html ใช้ test case แบบ "ตรวจหน้าเว็บ" (ดู frontend/lib/htmlcheck.ts):
@@ -2493,6 +2769,70 @@ CSS_FLEX = r'''# จัดวางด้วย Flexbox
 > จำไว้: `display: flex` ที่กล่องแม่ แล้วจัดด้วย `justify-content` (แนวนอน) / `align-items` (แนวตั้ง) / `gap` (ช่องว่าง)
 '''
 
+HTML_FORMS = r'''# ฟอร์ม: ช่องให้กรอกข้อมูล
+
+## ใบสมัครกระดาษ
+
+เคยกรอกใบสมัครไหม มีช่องให้เขียนชื่อ ช่องให้ติ๊กถูก และปุ่มส่งใบสมัคร หน้าเว็บก็มี **ฟอร์ม** (form) แบบเดียวกัน ใช้ให้คนกรอกข้อมูล เช่น ล็อกอิน หรือค้นหา
+
+ฟอร์มทั้งใบอยู่ในแท็ก `<form>` และข้างในมีช่องต่าง ๆ
+
+```html demo
+<form>
+  <label for="name">ชื่อของคุณ</label><br>
+  <input type="text" id="name" placeholder="พิมพ์ชื่อที่นี่"><br><br>
+  <button type="button">ส่ง</button>
+</form>
+```
+
+## ช่องกรอก `<input>`
+
+`<input>` เป็นช่องให้กรอก และใช้ `type` บอกว่าเป็นช่องแบบไหน
+
+- `type="text"` ช่องพิมพ์ข้อความ
+- `type="email"` ช่องอีเมล
+- `type="password"` ช่องรหัสผ่าน (ตัวอักษรเป็นจุด ๆ)
+- `type="checkbox"` ช่องติ๊กถูก
+- `type="number"` ช่องตัวเลข
+
+แท็ก `<input>` ไม่มีแท็กปิด และ `placeholder` คือข้อความจาง ๆ ที่ช่วยบอกว่าให้พิมพ์อะไร
+
+## ป้ายชื่อ `<label>`
+
+`<label>` คือป้ายบอกว่าช่องนี้ไว้กรอกอะไร ผูกกับช่องด้วยการให้ `for` ในป้าย ตรงกับ `id` ของช่อง ข้อดีคือกดที่ป้ายแล้วจะเลือกช่องนั้นให้เลย
+
+```html demo
+<label for="agree">
+  <input type="checkbox" id="agree"> ฉันยอมรับกติกา
+</label>
+<br><br>
+<label for="age">อายุ</label>
+<input type="number" id="age" value="10">
+```
+
+## ตัวเลือกและข้อความยาว
+
+- `<select>` กับ `<option>` คือกล่องเลือกจากรายการ
+- `<textarea>` คือช่องพิมพ์ข้อความยาว ๆ หลายบรรทัด
+- `<button>` คือปุ่มกด
+
+```html demo
+<label for="color">สีที่ชอบ</label>
+<select id="color">
+  <option>แดง</option>
+  <option>เขียว</option>
+  <option>น้ำเงิน</option>
+</select>
+<br><br>
+<label for="msg">ข้อความ</label><br>
+<textarea id="msg" rows="3" cols="30">เขียนอะไรก็ได้</textarea>
+```
+
+> หมายเหตุ: ในหน้าเว็บของบทเรียนนี้ ปุ่มส่งฟอร์มจะยังไม่ส่งข้อมูลไปไหน เพราะเรากำลังฝึกแค่การสร้างหน้าตาของฟอร์มเท่านั้น
+
+> จำไว้: `<form>` ห่อทั้งใบ, `<input type="...">` ช่องกรอก, `<label for="...">` ป้ายชื่อ (ผูกกับ `id`), `<select>`/`<textarea>`/`<button>` ใช้เสริม
+'''
+
 HTML_LESSONS = [
     {
         "slug": "html-structure",
@@ -2688,7 +3028,380 @@ HTML_LESSONS = [
             ),
         ],
     },
+    {
+        "slug": "forms",
+        "title": "ฟอร์ม: ช่องให้กรอกข้อมูล",
+        "minutes": 12,
+        "starter": "<form>\n  <label for=\"name\">ชื่อ</label>\n  <input type=\"text\" id=\"name\">\n</form>\n",
+        "content": HTML_FORMS,
+        "exercises": [
+            mcq(
+                "ช่องกรอกรหัสผ่าน ควรใช้ `<input>` แบบใด",
+                ["type=\"text\"", "type=\"password\"", "type=\"secret\"", "type=\"hidden-text\""],
+                1,
+                "type=\"password\" จะแสดงตัวอักษรเป็นจุด ๆ เพื่อไม่ให้คนข้าง ๆ เห็น",
+            ),
+            mcq(
+                "ทำอย่างไรให้ `<label>` ผูกกับช่อง `<input>`",
+                ["ให้ for ของ label ตรงกับ id ของ input", "ใส่สีเดียวกัน", "เขียนไว้บรรทัดเดียวกัน", "ใช้ชื่อ class เหมือนกัน"],
+                0,
+                "for ใน label ต้องมีค่าเท่ากับ id ของช่อง ถึงจะผูกกัน",
+            ),
+            code(
+                "สร้างฟอร์มสมัครสมาชิก: มี `<form>` ข้างในมี (1) ช่องอีเมลที่ `id=\"email\"` และ `type=\"email\"` (2) `<label for=\"email\">` ที่ข้อความคือ `อีเมล` และ (3) ปุ่ม `<button>`",
+                "<form>\n  <!-- เขียนฟอร์มตรงนี้ -->\n</form>\n",
+                [
+                    check("มี <form> 1 อัน", "count|form", "1"),
+                    check("ช่องอีเมลมี type=email", "attr|input#email|type", "email"),
+                    check("label ผูกกับช่อง (for=email)", "attr|label|for", "email"),
+                    check("ข้อความของ label คือ อีเมล", "text|label", "อีเมล"),
+                    check("มีปุ่ม <button>", "has|form button", "true"),
+                ],
+                "คำตอบ: <form><label for=\"email\">อีเมล</label><input type=\"email\" id=\"email\"><button>สมัคร</button></form>",
+            ),
+        ],
+    },
 ]
+
+# ======================================================================== SQL
+#
+# SQL รันด้วย sqlite3 ในเบราว์เซอร์ (frontend/public/workers/sqlrun.py) บนฐานข้อมูลตัวอย่างที่สร้างใหม่ทุกครั้ง:
+#   pets(id, name, kind, age, weight)   snacks(id, name, price, stock)
+# ผลลัพธ์ของ SELECT ถูกพิมพ์เป็นข้อความ (บรรทัดแรก = ชื่อคอลัมน์) แบบฝึกหัดจึงเทียบข้อความได้เหมือนภาษาอื่น
+# กติกา: ในช่อง explanation ของแบบฝึกหัดโค้ด ให้ขึ้นต้นด้วย "คำตอบ: " ตามด้วย SQL เฉลย (เทสต์จะรันเฉลยนี้เทียบกับ expected)
+
+SQL_SELECT = r'''# SELECT: ถามข้อมูลจากตาราง
+
+## ตารางคือสมุดรายชื่อ
+
+ลองนึกถึงสมุดรายชื่อสัตว์เลี้ยงของร้านหนึ่ง มีหลายแถว แต่ละแถวคือสัตว์หนึ่งตัว และมีหลายช่อง เช่น ชื่อ ชนิด อายุ
+
+ในโลกคอมพิวเตอร์ สมุดแบบนี้เรียกว่า **ตาราง** (table) แถวเรียกว่า **แถว** ส่วนช่องเรียกว่า **คอลัมน์** และ **SQL** (เอส-คิว-แอล) คือภาษาที่ใช้ “ถาม” ข้อมูลจากตาราง
+
+บทเรียนนี้มีตารางให้ฝึก 2 ตาราง คือ `pets` (สัตว์เลี้ยง: id, name, kind, age, weight) และ `snacks` (ขนม: id, name, price, stock)
+
+## ถามทุกอย่าง
+
+คำสั่ง `SELECT` แปลว่า “เลือกมาดู” และ `FROM` บอกว่าดึงจากตารางไหน เครื่องหมาย `*` แปลว่า “ทุกคอลัมน์” ปิดท้ายคำสั่งด้วย `;`
+
+```sql demo
+SELECT * FROM pets;
+```
+
+ผลลัพธ์บรรทัดแรกคือชื่อคอลัมน์ บรรทัดต่อไปคือข้อมูลของแต่ละแถว
+
+## เลือกเฉพาะคอลัมน์ที่ต้องการ
+
+ถ้าอยากรู้แค่ชื่อกับชนิด ให้เขียนชื่อคอลัมน์คั่นด้วย `,` แทน `*`
+
+```sql demo
+SELECT name, kind FROM pets;
+```
+
+ลองเปลี่ยนเป็น `SELECT name, weight FROM pets;` ดู
+
+> จำไว้: `SELECT คอลัมน์ FROM ตาราง;` และ `*` คือทุกคอลัมน์ SQL ไม่สนใจว่าจะเขียนตัวพิมพ์เล็กหรือใหญ่ แต่นิยมเขียนคำสั่งเป็นตัวใหญ่
+'''
+
+SQL_WHERE = r'''# WHERE: กรองเฉพาะที่ต้องการ
+
+## ถามเฉพาะที่อยากรู้
+
+ถ้าอยากรู้เฉพาะ “แมว” ไม่ใช่สัตว์ทุกตัว ก็เหมือนเปิดสมุดแล้วเลือกอ่านเฉพาะบรรทัดที่เป็นแมว ใน SQL ใช้ `WHERE` (แปลว่า “ที่ซึ่ง”) ตามด้วยเงื่อนไข
+
+```sql demo
+SELECT name, age FROM pets WHERE kind = 'แมว';
+```
+
+ข้อความต้องใส่ในเครื่องหมาย `'...'` ส่วนตัวเลขไม่ต้องใส่
+
+## เปรียบเทียบตัวเลข
+
+ใช้ `>` (มากกว่า) `<` (น้อยกว่า) `>=` `<=` `=` (เท่ากับ) และ `!=` (ไม่เท่ากับ)
+
+```sql demo
+SELECT name, age FROM pets WHERE age > 3;
+```
+
+## รวมหลายเงื่อนไข
+
+- `AND` ต้องเป็นจริงทั้งคู่
+- `OR` เป็นจริงข้อใดข้อหนึ่งก็พอ
+
+```sql demo
+SELECT name, kind, age FROM pets WHERE kind = 'หมา' AND age > 5;
+```
+
+## ค้นหาด้วยตัวอักษร
+
+`LIKE` ใช้ค้นหาข้อความ โดย `%` แทนตัวอักษรกี่ตัวก็ได้ เช่น `'ข้าว%'` คือคำที่ขึ้นต้นด้วย “ข้าว”
+
+```sql demo
+SELECT name FROM pets WHERE name LIKE 'ข้าว%';
+```
+
+> จำไว้: `WHERE เงื่อนไข` กรองแถว ใช้ `AND` / `OR` รวมเงื่อนไข และ `LIKE` กับ `%` ค้นหาข้อความ
+'''
+
+SQL_ORDER = r'''# ORDER BY และ LIMIT: เรียงและเลือกจำนวน
+
+## เรียงลำดับ
+
+เหมือนเรียงรายชื่อนักเรียนตามส่วนสูง ใช้ `ORDER BY` ตามด้วยชื่อคอลัมน์ ค่าปกติเรียงจากน้อยไปมาก ถ้าอยากเรียงจากมากไปน้อยให้ใส่ `DESC` ต่อท้าย
+
+```sql demo
+SELECT name, age FROM pets ORDER BY age;
+```
+
+```sql demo
+SELECT name, weight FROM pets ORDER BY weight DESC;
+```
+
+## เอาแค่บางส่วน
+
+`LIMIT` กำหนดว่าอยากได้กี่แถว เช่น “สัตว์ที่หนักที่สุด 3 ตัวแรก”
+
+```sql demo
+SELECT name, weight FROM pets ORDER BY weight DESC LIMIT 3;
+```
+
+## ใช้ร่วมกับ WHERE
+
+ลำดับที่เขียนคือ `WHERE` ก่อน แล้วค่อย `ORDER BY` และ `LIMIT`
+
+```sql demo
+SELECT name, price FROM snacks WHERE stock > 0 ORDER BY price DESC;
+```
+
+> จำไว้: `ORDER BY คอลัมน์ [DESC]` เรียงลำดับ และ `LIMIT n` เอาแค่ n แถว
+'''
+
+SQL_GROUP = r'''# นับและสรุป: COUNT, AVG, GROUP BY
+
+## สรุปแทนที่จะอ่านทีละแถว
+
+ถ้าอยากรู้ว่า “มีสัตว์กี่ตัว” ไม่ต้องนับด้วยตัวเอง ให้ SQL ช่วยด้วย **ฟังก์ชันสรุป**
+
+- `COUNT(*)` นับจำนวนแถว
+- `SUM(คอลัมน์)` ผลรวม
+- `AVG(คอลัมน์)` ค่าเฉลี่ย
+- `MAX(คอลัมน์)` / `MIN(คอลัมน์)` ค่ามากสุด / น้อยสุด
+
+```sql demo
+SELECT COUNT(*) AS total FROM pets;
+```
+
+`AS ชื่อ` ใช้ตั้งชื่อให้คอลัมน์ผลลัพธ์ อ่านง่ายขึ้น
+
+```sql demo
+SELECT MAX(price) AS แพงสุด, MIN(price) AS ถูกสุด, SUM(stock) AS ของทั้งหมด FROM snacks;
+```
+
+## แยกเป็นกลุ่มด้วย GROUP BY
+
+อยากรู้ว่า “แมวกี่ตัว หมากี่ตัว” ให้จัดกลุ่มตามชนิดก่อน แล้วนับในแต่ละกลุ่ม
+
+```sql demo
+SELECT kind, COUNT(*) AS total FROM pets GROUP BY kind;
+```
+
+ค่าเฉลี่ยของแต่ละกลุ่มก็ได้เช่นกัน
+
+```sql demo
+SELECT kind, AVG(weight) AS avg_weight FROM pets GROUP BY kind ORDER BY kind;
+```
+
+> จำไว้: `COUNT` / `SUM` / `AVG` / `MAX` / `MIN` สรุปข้อมูล และ `GROUP BY` แยกเป็นกลุ่มก่อนสรุป
+'''
+
+SQL_MODIFY = r'''# เพิ่ม แก้ และลบข้อมูล
+
+## ไม่ใช่แค่ดู แต่แก้ได้ด้วย
+
+ที่ผ่านมาเราแค่ “ถาม” ข้อมูล ตอนนี้จะลอง “เขียน” ลงตาราง มี 3 คำสั่ง
+
+- `INSERT INTO` เพิ่มแถวใหม่
+- `UPDATE ... SET` แก้ข้อมูล
+- `DELETE FROM` ลบแถว
+
+> สบายใจได้: ทุกครั้งที่กดรัน ระบบสร้างตารางตัวอย่างใหม่ให้ ดังนั้นลองแก้หรือลบเล่นแค่ไหนก็ไม่เสียหาย
+
+## INSERT: เพิ่มแถว
+
+ใส่ค่าเรียงตามคอลัมน์ของตาราง (id, name, kind, age, weight)
+
+```sql demo
+INSERT INTO pets VALUES (9, 'ฟ้าใส', 'นก', 1, 0.2);
+SELECT * FROM pets WHERE id = 9;
+```
+
+## UPDATE: แก้ข้อมูล
+
+```sql demo
+UPDATE snacks SET stock = 50 WHERE name = 'ขนมปัง';
+SELECT name, stock FROM snacks WHERE name = 'ขนมปัง';
+```
+
+## DELETE: ลบแถว
+
+```sql demo
+DELETE FROM snacks WHERE stock = 0;
+SELECT name FROM snacks;
+```
+
+## ระวัง: ลืม WHERE
+
+ถ้าเขียน `UPDATE` หรือ `DELETE` โดยไม่ใส่ `WHERE` จะมีผลกับ **ทุกแถว** ในตาราง (ในงานจริงอาจข้อมูลหายหมด!) ตรวจ `WHERE` ทุกครั้งก่อนรัน
+
+> จำไว้: `INSERT INTO` เพิ่ม, `UPDATE ... SET ... WHERE` แก้, `DELETE FROM ... WHERE` ลบ และอย่าลืม `WHERE`
+'''
+
+SQL_LESSONS = [
+    {
+        "slug": "select",
+        "title": "SELECT: ถามข้อมูลจากตาราง",
+        "minutes": 10,
+        "starter": "SELECT * FROM pets;\n",
+        "content": SQL_SELECT,
+        "exercises": [
+            mcq(
+                "คำสั่งใดใช้ “ดึงข้อมูลมาดู” จากตาราง",
+                ["SHOW", "SELECT", "GET", "OPEN"],
+                1,
+                "SELECT ใช้เลือกข้อมูลมาดู ตามด้วย FROM ชื่อตาราง",
+            ),
+            mcq(
+                "`SELECT * FROM pets;` เครื่องหมาย `*` หมายถึงอะไร",
+                ["ทุกคอลัมน์", "แถวแรก", "คูณกัน", "ซ่อนคอลัมน์"],
+                0,
+                "* แทนทุกคอลัมน์ของตาราง",
+            ),
+            code(
+                "จากตาราง `snacks` ให้แสดงเฉพาะคอลัมน์ `name` และ `price` (เรียงตามนี้)",
+                "-- เขียน SQL ตรงนี้\n",
+                [
+                    {
+                        "after": "",
+                        "expected": "name | price\nคุกกี้ | 15\nช็อกโกแลต | 25\nลูกอม | 5\nน้ำส้ม | 12\nขนมปัง | 18",
+                    },
+                ],
+                "คำตอบ: SELECT name, price FROM snacks;",
+            ),
+        ],
+    },
+    {
+        "slug": "where",
+        "title": "WHERE: กรองเฉพาะที่ต้องการ",
+        "minutes": 12,
+        "starter": "SELECT name, age FROM pets WHERE kind = 'แมว';\n",
+        "content": SQL_WHERE,
+        "exercises": [
+            mcq(
+                "ข้อใดเขียนเงื่อนไข “ชนิดเป็นแมว” ได้ถูกต้อง",
+                ["WHERE kind = 'แมว'", "WHERE kind = แมว", "IF kind = 'แมว'", "FILTER kind 'แมว'"],
+                0,
+                "ใช้ WHERE และข้อความต้องอยู่ในเครื่องหมาย ' '",
+            ),
+            mcq(
+                "`WHERE kind = 'หมา' OR kind = 'แมว'` จะได้แถวแบบใด",
+                ["เฉพาะที่เป็นทั้งหมาและแมวพร้อมกัน", "ที่เป็นหมาหรือแมวอย่างใดอย่างหนึ่ง", "ไม่ได้แถวใดเลย", "ทุกแถว"],
+                1,
+                "OR ผ่านถ้าเงื่อนไขใดเงื่อนไขหนึ่งเป็นจริง",
+            ),
+            code(
+                "แสดงคอลัมน์ `name` ของสัตว์ที่เป็น `'หมา'` และมีอายุ `age` **มากกว่า 5** ปี",
+                "-- เขียน SQL ตรงนี้\n",
+                [{"after": "", "expected": "name\nทองดี"}],
+                "คำตอบ: SELECT name FROM pets WHERE kind = 'หมา' AND age > 5;",
+            ),
+        ],
+    },
+    {
+        "slug": "order-limit",
+        "title": "ORDER BY และ LIMIT",
+        "minutes": 10,
+        "starter": "SELECT name, weight FROM pets ORDER BY weight DESC LIMIT 3;\n",
+        "content": SQL_ORDER,
+        "exercises": [
+            mcq(
+                "ต้องการเรียงจาก “มากไปน้อย” ใช้อะไรต่อท้าย ORDER BY",
+                ["DESC", "DOWN", "BIG", "REVERSE"],
+                0,
+                "DESC (descending) คือเรียงจากมากไปน้อย",
+            ),
+            mcq(
+                "`LIMIT 3` ทำอะไร",
+                ["เอาเฉพาะ 3 แถวแรกของผลลัพธ์", "ลบ 3 แถว", "เรียง 3 รอบ", "เพิ่ม 3 คอลัมน์"],
+                0,
+                "LIMIT n จำกัดจำนวนแถวที่แสดงเป็น n",
+            ),
+            code(
+                "แสดง `name` และ `weight` ของสัตว์ที่ **หนักที่สุด 3 ตัว** เรียงจากหนักไปเบา",
+                "-- เขียน SQL ตรงนี้\n",
+                [{"after": "", "expected": "name | weight\nทองดี | 20.1\nถั่วดำ | 12.5\nบุ๋ม | 5.0"}],
+                "คำตอบ: SELECT name, weight FROM pets ORDER BY weight DESC LIMIT 3;",
+            ),
+        ],
+    },
+    {
+        "slug": "group-by",
+        "title": "นับและสรุป: COUNT, AVG, GROUP BY",
+        "minutes": 12,
+        "starter": "SELECT kind, COUNT(*) AS total FROM pets GROUP BY kind;\n",
+        "content": SQL_GROUP,
+        "exercises": [
+            mcq(
+                "ต้องการนับว่ามีกี่แถว ใช้ฟังก์ชันใด",
+                ["COUNT(*)", "SUM(*)", "TOTAL(*)", "NUMBER(*)"],
+                0,
+                "COUNT(*) นับจำนวนแถว",
+            ),
+            mcq(
+                "ต้องการรู้ “จำนวนสัตว์ของแต่ละชนิด” ต้องใช้อะไรร่วมกับ COUNT",
+                ["GROUP BY kind", "ORDER BY kind", "LIMIT kind", "WHERE kind"],
+                0,
+                "GROUP BY แยกกลุ่มตามชนิดก่อน แล้ว COUNT นับในแต่ละกลุ่ม",
+            ),
+            code(
+                "นับจำนวนสัตว์แต่ละชนิด แสดงคอลัมน์ `kind` และจำนวนที่ตั้งชื่อว่า `total` (ใช้ `AS total`) เรียงตาม `kind`",
+                "-- เขียน SQL ตรงนี้\n",
+                [{"after": "", "expected": "kind | total\nกระต่าย | 1\nนก | 1\nหนู | 1\nหมา | 2\nแมว | 3"}],
+                "คำตอบ: SELECT kind, COUNT(*) AS total FROM pets GROUP BY kind ORDER BY kind;",
+            ),
+        ],
+    },
+    {
+        "slug": "modify",
+        "title": "เพิ่ม แก้ และลบข้อมูล",
+        "minutes": 12,
+        "starter": "INSERT INTO pets VALUES (9, 'ฟ้าใส', 'นก', 1, 0.2);\nSELECT * FROM pets;\n",
+        "content": SQL_MODIFY,
+        "exercises": [
+            mcq(
+                "ถ้าเขียน `DELETE FROM pets;` โดยไม่ใส่ WHERE จะเกิดอะไรขึ้น",
+                ["ลบทุกแถวในตาราง", "ไม่ลบอะไรเลย", "ลบแถวแรก", "เกิด error เสมอ"],
+                0,
+                "ไม่มี WHERE แปลว่ามีผลกับทุกแถว ต้องระวังมาก",
+            ),
+            mcq(
+                "คำสั่งใดใช้แก้ข้อมูลที่มีอยู่แล้ว",
+                ["UPDATE", "INSERT", "CHANGE", "MODIFY"],
+                0,
+                "UPDATE ตาราง SET คอลัมน์ = ค่าใหม่ WHERE ...",
+            ),
+            code(
+                "เพิ่มสัตว์ตัวใหม่ลงตาราง `pets` ด้วย `INSERT INTO` ให้ได้ `id` = 9, `name` = `'ฟ้าใส'`, `kind` = `'นก'`, `age` = 1, `weight` = 0.2 (ระบบจะแสดงผลตรวจให้เอง ไม่ต้อง SELECT)",
+                "-- เขียน SQL ตรงนี้\n",
+                [
+                    {"after": "SELECT COUNT(*) AS total FROM pets;", "expected": "total\n9"},
+                    {"after": "SELECT name FROM pets WHERE id = 9;", "expected": "name\nฟ้าใส"},
+                ],
+                "คำตอบ: INSERT INTO pets VALUES (9, 'ฟ้าใส', 'นก', 1, 0.2);",
+            ),
+        ],
+    },
+]
+
 
 COURSES = [
     {
@@ -2717,5 +3430,14 @@ COURSES = [
         "level": "beginner",
         "sort_order": 3,
         "lessons": HTML_LESSONS,
+    },
+    {
+        "language": "sql",
+        "slug": "sql-basics",
+        "title": "SQL เบื้องต้น",
+        "description": "ถามและจัดการข้อมูลในตาราง ด้วยภาษาที่ใช้กันทั่วโลก ลองรันได้ทันที",
+        "level": "beginner",
+        "sort_order": 4,
+        "lessons": SQL_LESSONS,
     },
 ]

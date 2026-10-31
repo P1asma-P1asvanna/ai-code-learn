@@ -4,12 +4,25 @@ import type { ReactNode } from "react";
 
 import AuthButton from "@/components/AuthButton";
 import Providers from "@/components/Providers";
+import SiteFooter from "@/components/SiteFooter";
 
 import "./globals.css";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL;
+const description =
+  "เรียนเขียนโค้ดฟรี Python, JavaScript, HTML & CSS เนื้อหาอ่านง่าย มีตัวอย่างสาธิตและวาดภาพด้วยโค้ด รันในเบราว์เซอร์ได้เลย พร้อมแบบฝึกหัดและ AI ช่วยตอบ";
+
 export const metadata: Metadata = {
-  title: "AI Code Learn",
-  description: "เรียนเขียนโค้ดฟรี พร้อม Playground และ AI ช่วยตรวจโค้ด",
+  ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
+  title: { default: "AI Code Learn — เรียนเขียนโค้ดฟรี", template: "%s · AI Code Learn" },
+  description,
+  openGraph: {
+    type: "website",
+    locale: "th_TH",
+    siteName: "AI Code Learn",
+    title: "AI Code Learn — เรียนเขียนโค้ดฟรี",
+    description,
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -32,6 +45,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             </div>
           </header>
           {children}
+          <SiteFooter />
         </Providers>
       </body>
     </html>

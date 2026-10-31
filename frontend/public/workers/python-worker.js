@@ -41,6 +41,24 @@ function sendDrawing(pyodide, id) {
   }
 }
 
+/* ตัวรัน SQL: ใช้ sqlite3 ของ Python (ใน Pyodide ต้องโหลดแพ็กเกจ sqlite3 ก่อน) และโค้ดจาก /workers/sqlrun.py */
+let sqlReady = false;
+async function installSql(pyodide) {
+  if (sqlReady) return;
+  await pyodide.loadPackage("sqlite3");
+  const response = await fetch("/workers/sqlrun.py");
+  if (!response.ok) throw new Error("โหลดตัวรัน SQL ไม่สำเร็จ");
+  pyodide.globals.set("_sql_src", await response.text());
+  pyodide.runPython(
+    "import sys, types\n" +
+      "_m = types.ModuleType('sqlrun')\n" +
+      "exec(_sql_src, _m.__dict__)\n" +
+      "sys.modules['sqlrun'] = _m\n" +
+      "del _m, _sql_src\n",
+  );
+  sqlReady = true;
+}
+
 function getPyodide() {
   if (!pyodidePromise) {
     pyodidePromise = loadPyodide({ indexURL: INDEX_URL }).catch((error) => {
@@ -71,13 +89,25 @@ function cleanTraceback(message) {
 }
 
 self.onmessage = async (event) => {
-  const { id, code } = event.data;
+  const { id, code, language } = event.data;
   const send = (type, text) => self.postMessage({ id, type, text });
 
   try {
     const pyodide = await getPyodide();
     pyodide.setStdout({ batched: (line) => send("stdout", line) });
     pyodide.setStderr({ batched: (line) => send("stderr", line) });
+
+    if (language === "sql") {
+      await installSql(pyodide);
+      self.postMessage({ id, type: "started" });
+      pyodide.globals.set("_sql_code", code);
+      const failure = pyodide.runPython(
+        "import sys\nfrom sqlrun import run_sql\nrun_sql(_sql_code, print)",
+      );
+      if (failure) send("error", String(failure));
+      else self.postMessage({ id, type: "done" });
+      return;
+    }
 
     await installTurtle(pyodide);
     if (turtleReady) {

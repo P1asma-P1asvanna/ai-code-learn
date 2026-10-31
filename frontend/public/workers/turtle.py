@@ -290,9 +290,20 @@ done = _screen.mainloop
 colormode = _screen.colormode
 clearscreen = _screen.clear
 
+
+def lines_drawn():
+    """(เฉพาะเว็บนี้) จำนวนเส้นที่วาดไปแล้ว — ใช้ตรวจแบบฝึกหัดวาดภาพ"""
+    return sum(1 for c in _commands if c["t"] == "line")
+
+
+def path_length():
+    """(เฉพาะเว็บนี้) ความยาวรวมของเส้นที่วาดไปแล้ว — ใช้ตรวจแบบฝึกหัดวาดภาพ"""
+    return sum(_math.hypot(c["x2"] - c["x1"], c["y2"] - c["y1"]) for c in _commands if c["t"] == "line")
+
+
 __all__ = ["Turtle", "Screen"] + _FUNCS + [
     "width", "heading", "bgcolor", "title", "setup", "tracer", "update", "delay", "exitonclick", "mainloop", "done",
-    "colormode", "clearscreen",
+    "colormode", "clearscreen", "lines_drawn", "path_length",
 ]
 
 
