@@ -23,7 +23,7 @@ import {
   type McqExercise,
   type SubmitResult,
 } from "@/lib/learn";
-import { CodeRunner, type Language, type OutputLine } from "@/lib/runner";
+import { CodeRunner, type Language, type OutputLine } from "@/lib/coderunner";
 import type { Drawing } from "@/lib/turtle";
 import TurtleCanvas from "@/components/TurtleCanvas";
 

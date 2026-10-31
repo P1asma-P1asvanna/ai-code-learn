@@ -1,4 +1,4 @@
-import type { CodeRunner, Language, RunResult } from "@/lib/runner";
+import type { CodeRunner, Language, RunResult } from "@/lib/coderunner";
 
 /** หนึ่งรอบการรันของแบบฝึกหัดเขียนโค้ด: ระบบใส่โค้ดก่อน/หลังโค้ดของผู้เรียน (ดู course_content.py ฝั่ง backend) */
 export type CaseSpec = { before: string; after: string };

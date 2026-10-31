@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import HtmlPreview from "@/components/HtmlPreview";
 import TurtleCanvas from "@/components/TurtleCanvas";
-import type { OutputLine } from "@/lib/runner";
+import type { OutputLine } from "@/lib/coderunner";
 import type { Drawing } from "@/lib/turtle";
 
 export type DemoResult = { lines: OutputLine[]; drawing: Drawing | null };

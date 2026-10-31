@@ -231,7 +231,7 @@ frontend/                Next.js
   components/LessonView.tsx   หน้าอ่านบทเรียน + ตัวแก้ไขโค้ด + แบบฝึกหัด
   components/DashboardView.tsx หน้า Dashboard (app/dashboard)
   app/lessons/                รายการคอร์ส / รายการบทเรียน / หน้าบทเรียน
-  lib/runner.ts               ตัวควบคุมการรันโค้ด (timeout, หยุด, จำกัดผลลัพธ์)
+  lib/coderunner.ts           ตัวควบคุมการรันโค้ด (timeout, หยุด, จำกัดผลลัพธ์)
   lib/htmlcheck.ts            ตัวแสดง/ตรวจหน้าเว็บ HTML & CSS (iframe ที่ไม่รันสคริปต์)
   public/workers/             ตัวรัน JavaScript / Python (Web Worker)
 render.yaml              ตั้งค่า deploy หลังบ้าน

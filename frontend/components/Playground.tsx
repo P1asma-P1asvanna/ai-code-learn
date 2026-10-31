@@ -13,7 +13,7 @@ import {
 } from "@/lib/ai";
 import { ApiError, wakeBackend } from "@/lib/api";
 import TurtleCanvas from "@/components/TurtleCanvas";
-import { CodeRunner, type Language, type OutputLine, type RunResult } from "@/lib/runner";
+import { CodeRunner, type Language, type OutputLine, type RunResult } from "@/lib/coderunner";
 import type { Drawing } from "@/lib/turtle";
 
 type EditorInstance = Parameters<OnMount>[0];
