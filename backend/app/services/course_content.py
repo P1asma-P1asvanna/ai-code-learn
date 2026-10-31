@@ -3066,7 +3066,7 @@ HTML_LESSONS = [
 # ======================================================================== SQL
 #
 # SQL รันด้วย sqlite3 ในเบราว์เซอร์ (frontend/public/workers/sqlrun.py) บนฐานข้อมูลตัวอย่างที่สร้างใหม่ทุกครั้ง:
-#   pets(id, name, kind, age, weight)   snacks(id, name, price, stock)
+#   pets(id, name, kind, age, weight)   snacks(id, name, price, stock)   owners(id, name, pet_id)
 # ผลลัพธ์ของ SELECT ถูกพิมพ์เป็นข้อความ (บรรทัดแรก = ชื่อคอลัมน์) แบบฝึกหัดจึงเทียบข้อความได้เหมือนภาษาอื่น
 # กติกา: ในช่อง explanation ของแบบฝึกหัดโค้ด ให้ขึ้นต้นด้วย "คำตอบ: " ตามด้วย SQL เฉลย (เทสต์จะรันเฉลยนี้เทียบกับ expected)
 
@@ -3078,7 +3078,7 @@ SQL_SELECT = r'''# SELECT: ถามข้อมูลจากตาราง
 
 ในโลกคอมพิวเตอร์ สมุดแบบนี้เรียกว่า **ตาราง** (table) แถวเรียกว่า **แถว** ส่วนช่องเรียกว่า **คอลัมน์** และ **SQL** (เอส-คิว-แอล) คือภาษาที่ใช้ “ถาม” ข้อมูลจากตาราง
 
-บทเรียนนี้มีตารางให้ฝึก 2 ตาราง คือ `pets` (สัตว์เลี้ยง: id, name, kind, age, weight) และ `snacks` (ขนม: id, name, price, stock)
+บทเรียนนี้มีตารางให้ฝึกหลายตาราง ที่ใช้บ่อยคือ `pets` (สัตว์เลี้ยง: id, name, kind, age, weight) และ `snacks` (ขนม: id, name, price, stock) ส่วนตาราง `owners` (เจ้าของ) จะใช้ในบทท้าย ๆ
 
 ## ถามทุกอย่าง
 
@@ -3256,6 +3256,96 @@ SELECT name FROM snacks;
 > จำไว้: `INSERT INTO` เพิ่ม, `UPDATE ... SET ... WHERE` แก้, `DELETE FROM ... WHERE` ลบ และอย่าลืม `WHERE`
 '''
 
+SQL_MORE = r'''# เงื่อนไขและการคำนวณเพิ่มเติม
+
+## ตัวช่วยให้เขียนเงื่อนไขสั้นลง
+
+- `IN (...)` ตรงกับค่าใดค่าหนึ่งในรายการ
+- `BETWEEN a AND b` อยู่ระหว่าง a ถึง b (รวมทั้งสองค่า)
+- `DISTINCT` เอาเฉพาะค่าที่ไม่ซ้ำ
+
+```sql demo
+SELECT name, kind FROM pets WHERE kind IN ('หมา', 'นก');
+```
+
+```sql demo
+SELECT name, age FROM pets WHERE age BETWEEN 2 AND 5;
+```
+
+```sql demo
+SELECT DISTINCT kind FROM pets;
+```
+
+## คำนวณในคำสั่งได้เลย
+
+ใช้ `+` `-` `*` `/` กับตัวเลขในคอลัมน์ได้ และตั้งชื่อผลลัพธ์ด้วย `AS` เช่น ถ้าอยากรู้ว่าขนมแต่ละอย่างมีมูลค่าเท่าไรในร้าน (ราคา x จำนวนที่เหลือ)
+
+```sql demo
+SELECT name, price * stock AS value FROM snacks;
+```
+
+## ค่าว่าง (NULL)
+
+ช่องที่ไม่มีข้อมูลเรียกว่า `NULL` ต้องตรวจด้วย `IS NULL` หรือ `IS NOT NULL` (เขียน `= NULL` ไม่ได้ผล)
+
+```sql demo
+INSERT INTO pets VALUES (9, 'ฟ้าใส', 'นก', NULL, 0.2);
+SELECT name, age FROM pets WHERE age IS NULL;
+```
+
+> จำไว้: `IN`, `BETWEEN`, `DISTINCT` ช่วยกรอง, คำนวณด้วย `*` แล้วตั้งชื่อด้วย `AS`, และตรวจค่าว่างด้วย `IS NULL`
+'''
+
+SQL_JOIN = r'''# JOIN: เอาสองตารางมาต่อกัน
+
+## ข้อมูลอยู่คนละสมุด
+
+ร้านสัตว์เลี้ยงมีสมุดสองเล่ม เล่มแรกจดชื่อสัตว์ เล่มที่สองจดว่า “ใครเป็นเจ้าของตัวไหน” (ตาราง `owners` มีคอลัมน์ `name` ของเจ้าของ และ `pet_id` ซึ่งคือเลข `id` ของสัตว์ใน `pets`)
+
+ถ้าอยากรู้ว่า “มะลิเป็นของใคร” ต้องเอาสองเล่มมาเทียบกัน ใน SQL เรียกว่า **JOIN** (จอยน์ แปลว่าเชื่อมต่อ)
+
+```sql demo
+SELECT * FROM owners;
+```
+
+## INNER JOIN
+
+บอกว่าจะเชื่อมด้วยอะไรด้วย `ON` ที่นี่คือ `owners.pet_id` ต้องตรงกับ `pets.id` เขียนชื่อตารางนำหน้าคอลัมน์ (`ตาราง.คอลัมน์`) เพื่อไม่ให้สับสนเวลาสองตารางมีชื่อคอลัมน์ซ้ำกัน เช่น `name`
+
+```sql demo
+SELECT pets.name, owners.name AS owner
+FROM owners
+JOIN pets ON owners.pet_id = pets.id;
+```
+
+จะได้เฉพาะสัตว์ที่มีเจ้าของ (บางตัว เช่น ข้าวปั้น ยังไม่มีเจ้าของ จึงไม่ปรากฏ)
+
+## LEFT JOIN: เอาฝั่งซ้ายมาทั้งหมด
+
+ถ้าอยากเห็นสัตว์ **ทุกตัว** แม้ยังไม่มีเจ้าของ ให้เริ่มจาก `pets` แล้วใช้ `LEFT JOIN` ตัวที่ไม่มีเจ้าของจะขึ้น `NULL`
+
+```sql demo
+SELECT pets.name, owners.name AS owner
+FROM pets
+LEFT JOIN owners ON owners.pet_id = pets.id
+ORDER BY pets.id;
+```
+
+## ใช้ร่วมกับ WHERE
+
+```sql demo
+SELECT pets.name, owners.name AS owner
+FROM pets
+LEFT JOIN owners ON owners.pet_id = pets.id
+WHERE owners.name IS NULL;
+```
+
+นี่คือรายชื่อสัตว์ที่ยัง “รอเจ้าของ”
+
+> จำไว้: `JOIN ... ON ตารางA.คอลัมน์ = ตารางB.คอลัมน์` เชื่อมสองตาราง (ได้เฉพาะที่ตรงกัน) และ `LEFT JOIN` เอาตารางซ้ายมาทั้งหมด
+'''
+
+
 SQL_LESSONS = [
     {
         "slug": "select",
@@ -3397,6 +3487,60 @@ SQL_LESSONS = [
                     {"after": "SELECT name FROM pets WHERE id = 9;", "expected": "name\nฟ้าใส"},
                 ],
                 "คำตอบ: INSERT INTO pets VALUES (9, 'ฟ้าใส', 'นก', 1, 0.2);",
+            ),
+        ],
+    },
+    {
+        "slug": "more-conditions",
+        "title": "เงื่อนไขและการคำนวณเพิ่มเติม",
+        "minutes": 12,
+        "starter": "SELECT name, price * stock AS value FROM snacks;\n",
+        "content": SQL_MORE,
+        "exercises": [
+            mcq(
+                "ข้อใดตรวจ “ช่องที่ไม่มีข้อมูล” ได้ถูกต้อง",
+                ["WHERE age IS NULL", "WHERE age = NULL", "WHERE age = 0", "WHERE age = ''"],
+                0,
+                "ค่าว่าง (NULL) ต้องตรวจด้วย IS NULL ส่วน = NULL ไม่ได้ผล",
+            ),
+            mcq(
+                "`WHERE age BETWEEN 2 AND 5` ได้อายุแบบใด",
+                ["2 ถึง 5 (รวม 2 และ 5)", "เฉพาะ 3 และ 4", "มากกว่า 5", "น้อยกว่า 2"],
+                0,
+                "BETWEEN a AND b รวมทั้งค่า a และ b",
+            ),
+            code(
+                "แสดง `name` และมูลค่าสินค้าในร้านที่ตั้งชื่อว่า `value` (คือ `price * stock`) เฉพาะขนมที่ `stock > 0` เรียงจาก `value` มากไปน้อย",
+                "-- เขียน SQL ตรงนี้\n",
+                [{"after": "", "expected": "name | value\nลูกอม | 500\nน้ำส้ม | 360\nคุกกี้ | 300\nช็อกโกแลต | 250"}],
+                "คำตอบ: SELECT name, price * stock AS value FROM snacks WHERE stock > 0 ORDER BY value DESC;",
+            ),
+        ],
+    },
+    {
+        "slug": "join",
+        "title": "JOIN: เอาสองตารางมาต่อกัน",
+        "minutes": 14,
+        "starter": "SELECT pets.name, owners.name AS owner\nFROM owners\nJOIN pets ON owners.pet_id = pets.id;\n",
+        "content": SQL_JOIN,
+        "exercises": [
+            mcq(
+                "`JOIN ... ON owners.pet_id = pets.id` ทำอะไร",
+                ["เชื่อมแถวของสองตารางที่ pet_id ตรงกับ id", "ลบตาราง owners", "รวมสองตารางเป็นตารางเดียวถาวร", "เรียงข้อมูลสองตาราง"],
+                0,
+                "ON บอกเงื่อนไขการเชื่อม คือแถวที่ค่าสองคอลัมน์นี้ตรงกัน",
+            ),
+            mcq(
+                "ถ้าอยากเห็นสัตว์ทุกตัว แม้ยังไม่มีเจ้าของ ควรใช้อะไร",
+                ["LEFT JOIN โดยเริ่มจากตาราง pets", "INNER JOIN เท่านั้น", "DISTINCT", "LIMIT 1"],
+                0,
+                "LEFT JOIN เอาแถวของตารางซ้ายมาทั้งหมด ตัวที่ไม่มีคู่จะได้ NULL",
+            ),
+            code(
+                "แสดงชื่อสัตว์ (`pets.name`) และชื่อเจ้าของที่ตั้งชื่อว่า `owner` (`owners.name AS owner`) เฉพาะสัตว์ที่มีเจ้าของ เชื่อมด้วย `owners.pet_id = pets.id` เรียงตามชื่อสัตว์ (`pets.name`)",
+                "-- เขียน SQL ตรงนี้\n",
+                [{"after": "", "expected": "name | owner\nถั่วดำ | คุณสมหญิง\nทองดี | คุณมานะ\nมะลิ | คุณสมชาย\nโมจิ | คุณปิติ"}],
+                "คำตอบ: SELECT pets.name, owners.name AS owner FROM owners JOIN pets ON owners.pet_id = pets.id ORDER BY pets.name;",
             ),
         ],
     },

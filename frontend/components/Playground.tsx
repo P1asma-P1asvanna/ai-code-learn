@@ -26,7 +26,7 @@ type Language = RunnerLanguage | "html";
 const STARTERS: Record<Language, string> = {
   python: 'name = "โลก"\nprint(f"สวัสดี {name}!")\n',
   javascript: 'const name = "โลก";\nconsole.log(`สวัสดี ${name}!`);\n',
-  sql: "SELECT name, kind, age FROM pets\nWHERE age > 2\nORDER BY age DESC;\n-- ตารางที่มีให้ลอง: pets, snacks\n",
+  sql: "SELECT name, kind, age FROM pets\nWHERE age > 2\nORDER BY age DESC;\n-- ตารางที่มีให้ลอง: pets, snacks, owners\n",
   html: '<style>\n  h1 { color: royalblue; }\n</style>\n\n<h1>สวัสดีชาวโลก</h1>\n<p>แก้ HTML และ CSS ตรงนี้ ผลลัพธ์ขึ้นทันที</p>\n',
 };
 const FILE_NAMES: Record<Language, string> = { python: "main.py", javascript: "main.js", sql: "main.sql", html: "index.html" };
@@ -331,7 +331,7 @@ export default function Playground() {
             ? "ผลลัพธ์แสดงสดด้านล่างขณะพิมพ์ · สคริปต์ในหน้าเว็บจะไม่ทำงานเพื่อความปลอดภัย"
             : "กด Ctrl/⌘ + Enter เพื่อรัน · โค้ดทำงานในเบราว์เซอร์ของคุณเอง ไม่ถูกส่งไปที่เซิร์ฟเวอร์"}
           {language === "python" ? " · input() ยังไม่รองรับ" : ""}
-          {language === "sql" ? " · มีตาราง pets และ snacks ให้ลอง (สร้างใหม่ทุกครั้งที่รัน)" : ""}
+          {language === "sql" ? " · มีตาราง pets, snacks และ owners ให้ลอง (สร้างใหม่ทุกครั้งที่รัน)" : ""}
         </p>
 
         <div className="output-head">

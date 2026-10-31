@@ -132,7 +132,7 @@ class ApiTests(unittest.TestCase):
 
         # คอร์ส HTML & CSS (ภาษา html ตรวจด้วยหน้าเว็บในเบราว์เซอร์ ไม่ใช่การรันโปรแกรม)
         self.assertEqual(courses["html-css-basics"]["lesson_count"], 7)
-        self.assertEqual(courses["sql-basics"]["lesson_count"], 5)
+        self.assertEqual(courses["sql-basics"]["lesson_count"], 7)
         self.assertEqual(courses["sql-basics"]["language"]["slug"], "sql")
         self.assertEqual(courses["html-css-basics"]["language"]["slug"], "html")
         page = self.lesson_page("html-css-basics", "css-basics").json()
@@ -302,7 +302,7 @@ class ApiTests(unittest.TestCase):
 
         sync_content()
         stats = sync_content()
-        self.assertEqual(stats["lessons"], 32)
+        self.assertEqual(stats["lessons"], 34)
 
         courses = {c["slug"]: c for c in self.client.get("/api/v1/content/courses").json()}
         self.assertEqual(courses["python-basics"]["lesson_count"], 10)

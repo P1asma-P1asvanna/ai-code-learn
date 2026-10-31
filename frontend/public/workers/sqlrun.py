@@ -1,6 +1,6 @@
 """ตัวรัน SQL สำหรับ AI Code Learn — ใช้ sqlite3 ที่มากับ Python (ในเบราว์เซอร์คือ Pyodide)
 
-ทุกครั้งที่รัน จะสร้างฐานข้อมูลในหน่วยความจำใหม่ ใส่ตารางตัวอย่าง (pets, snacks) ให้ แล้วรันคำสั่ง SQL ของผู้เรียนทีละคำสั่ง
+ทุกครั้งที่รัน จะสร้างฐานข้อมูลในหน่วยความจำใหม่ ใส่ตารางตัวอย่าง (pets, snacks, owners) ให้ แล้วรันคำสั่ง SQL ของผู้เรียนทีละคำสั่ง
 คำสั่งที่ได้ตาราง (เช่น SELECT) จะถูกพิมพ์เป็นข้อความ: บรรทัดแรกเป็นชื่อคอลัมน์ ตามด้วยแถวข้อมูล คั่นช่องด้วย " | "
 ไฟล์นี้ใช้เฉพาะ standard library และมีเทสต์ใน backend/tests (รันด้วย Python ปกติ)
 """
@@ -26,6 +26,12 @@ INSERT INTO snacks VALUES (2, 'ช็อกโกแลต', 25, 10);
 INSERT INTO snacks VALUES (3, 'ลูกอม', 5, 100);
 INSERT INTO snacks VALUES (4, 'น้ำส้ม', 12, 30);
 INSERT INTO snacks VALUES (5, 'ขนมปัง', 18, 0);
+
+CREATE TABLE owners (id INTEGER PRIMARY KEY, name TEXT, pet_id INTEGER);
+INSERT INTO owners VALUES (1, 'คุณสมชาย', 1);
+INSERT INTO owners VALUES (2, 'คุณสมหญิง', 2);
+INSERT INTO owners VALUES (3, 'คุณมานะ', 5);
+INSERT INTO owners VALUES (4, 'คุณปิติ', 3);
 """
 
 _DENIED = {_sqlite3.SQLITE_ATTACH, _sqlite3.SQLITE_DETACH}
